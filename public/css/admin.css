@@ -1,0 +1,2038 @@
+:root {
+    --primary-color: #0066cc;          /* Bleu MeepleQC */
+    --hover-color: #004d99;            /* Bleu foncé pour hover */
+    --bg-color: #f8f8f8;               /* Fond gris clair */
+    --border-color: #e0e0e0;
+    --text-color: #333333;
+    --text-light: #666666;
+    --danger-color: #dc2626;
+    --success-color: #16a34a;
+    --sidebar-width: 250px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, var(--primary-color), var(--hover-color));
+    color: white;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-logo h2 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.admin-menu {
+    list-style: none;
+    padding: 20px 0;
+    flex-grow: 1;
+}
+
+.admin-menu li {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-menu li:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.admin-menu li.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 500;
+}
+
+.admin-menu li i {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* Footer du sidebar */
+.admin-footer {
+    margin-top: auto;
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-to-site {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+}
+
+.back-to-site:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    width: 100%;
+    color: white;
+    background: rgba(220, 38, 38, 0.8);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+    background: var(--danger-color);
+    transform: translateY(-1px);
+}
+
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Content Styles */
+.admin-content {
+    flex-grow: 1;
+    margin-left: var(--sidebar-width);
+    padding: 20px;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Button Styles */
+.add-product-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;  /* Par défaut, le modal est caché */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+/* Style pour afficher le modal */
+.modal.show {
+    display: flex;  /* Flex uniquement quand le modal est affiché */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    position: relative;
+    max-width: 500px;
+    width: 90%;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease-out;
+    background-color: #ffffff;
+    margin: 20px;
+}
+
+.modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.modal h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: var(--primary-color);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Stats Cards */
+.sales-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.stat-card h3 {
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+}
+
+.stat-card p {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Charts */
+.sales-chart {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+/* Reports Grid */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.report-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-height: 400px;
+}
+
+.report-card h3 {
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+.report-card canvas {
+    min-height: 300px;
+}
+
+#low-stock-list {
+    list-style: none;
+    padding: 0;
+}
+
+#low-stock-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#low-stock-list li:last-child {
+    border-bottom: none;
+}
+
+.stock-count {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+.stock-count.out {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.stock-count.low {
+    background-color: #fff3e0;
+    color: #ff9800;
+}
+
+.no-data, .error {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1rem;
+}
+
+.no-data {
+    color: #666;
+    font-style: italic;
+}
+
+.error {
+    color: #dc3545;
+}
+
+.product-name {
+    font-weight: 500;
+}
+
+/* Ajouter ces styles */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: #e3f2fd;
+    color: var(--primary-color);
+}
+
+.status-badge.inactive {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Ajouter ces styles */
+.image-preview {
+    margin-top: 10px;
+    max-width: 200px;
+    max-height: 200px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: none;
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+}
+
+.product-image-cell {
+    width: 50px;
+    height: 50px;
+}
+
+.product-image-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* Styles pour la section des transactions */
+.sales-table-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-filter label {
+    font-weight: 500;
+    color: var(--secondary-color);
+}
+
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: var(--bg-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#sales-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#sales-table th {
+    background-color: #f8f9fa;
+    color: var(--secondary-color);
+    font-weight: 500;
+    padding: 12px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#sales-table td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+#sales-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.sale-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-sale-btn,
+.delete-sale-btn {
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-sale-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-sale-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.edit-sale-btn:hover,
+.delete-sale-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Styles pour le modal de vente */
+.sale-items {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.sale-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.sale-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.sale-item input[type="number"] {
+    width: 80px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.save-btn,
+.delete-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Ajouter ces styles pour le tableau des revenus */
+.table-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#product-revenue-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#product-revenue-table th,
+#product-revenue-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#product-revenue-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+#product-revenue-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.revenue-positive {
+    color: #2ecc71;
+}
+
+.revenue-negative {
+    color: #e74c3c;
+}
+
+/* Style pour les cellules de tableau vides */
+td.no-data, td.error {
+    text-align: center;
+    padding: 20px;
+}
+
+/* Ajouter ces styles */
+.reports-section {
+    margin: 20px 0;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.report-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.report-card h3 {
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.report-card canvas {
+    min-height: 300px;
+}
+
+/* Styles pour la section rapports */
+#reports .reports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+#reports .report-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#reports .report-card h3 {
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+#reports .table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#reports table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#reports th, 
+#reports td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#reports th {
+    background-color: #f8f9fa;
+    color: var(--secondary-color);
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+}
+
+#reports tr:hover {
+    background-color: #f8f9fa;
+}
+
+#reports .revenue-positive {
+    color: #2ecc71;
+    font-weight: 500;
+}
+
+#reports .revenue-negative {
+    color: #e74c3c;
+    font-weight: 500;
+}
+
+#reports .date-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#reports .no-data,
+#reports .error {
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 4px;
+}
+
+#reports .no-data {
+    background-color: #f8f9fa;
+    color: #666;
+}
+
+#reports .error {
+    background-color: #fff5f5;
+    color: #dc3545;
+}
+
+/* Styles pour les rapports */
+.reports-summary {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.reports-summary .stat-card {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.reports-summary .stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+.reports-summary .stat-card p {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.report-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.report-card h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+/* Ajouter ces styles pour les tableaux de coupons */
+.reports-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.report-card .table-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#coupon-usage-table,
+#sales-with-coupons-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#coupon-usage-table th,
+#coupon-usage-table td,
+#sales-with-coupons-table th,
+#sales-with-coupons-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#coupon-usage-table th,
+#sales-with-coupons-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 1;
+}
+
+.table-container tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Styles pour les rapports */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.report-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-container {
+    overflow-x: auto;
+    margin-top: 15px;
+}
+
+/* Messages d'erreur et données vides */
+.error-message {
+    color: #e74c3c;
+    text-align: center;
+    padding: 20px;
+    background: #fdf0ed;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.no-data {
+    text-align: center;
+    color: #7f8c8d;
+    padding: 20px;
+}
+
+/* Tableaux des rapports */
+#product-sales-table,
+#category-sales-table,
+#coupon-usage-table,
+#sales-with-coupons-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#product-sales-table th,
+#category-sales-table th,
+#coupon-usage-table th,
+#sales-with-coupons-table th,
+#product-sales-table td,
+#category-sales-table td,
+#coupon-usage-table td,
+#sales-with-coupons-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#product-sales-table th,
+#category-sales-table th,
+#coupon-usage-table th,
+#sales-with-coupons-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Statistiques globales */
+.reports-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2980b9;
+}
+
+/* Styles pour les listes de sélection des coupons */
+.products-list, .categories-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.checkbox-group {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.2s ease;
+}
+
+.checkbox-group:last-child {
+    border-bottom: none;
+}
+
+.checkbox-group:hover {
+    background-color: #f8f9fa;
+}
+
+/* Style au survol */
+.checkbox-group:hover {
+    background-color: #f5f5f5;
+}
+
+/* Style pour la case cochée */
+.checkbox-group input[type="checkbox"]:checked + label {
+    font-weight: 500;
+    color: #2196F3;
+}
+
+/* Styles pour la section des catégories */
+.categories-grid {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+#categories-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#categories-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+#categories-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit, .btn-delete {
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-edit {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+}
+
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.password-btn {
+    background: var(--success-color);
+    color: white;
+}
+
+.password-btn:hover {
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+/* Style pour le modal des catégories */
+.modal-content {
+    max-width: 400px;
+    margin: auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: var(--hover-color);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+/* Styles pour la section des coupons */
+.coupons-grid {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+#coupons-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#coupons-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+#coupons-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+#coupons-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit, .btn-delete {
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-edit {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+}
+
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+/* Style pour le modal des coupons */
+#coupon-modal .modal-content {
+    max-width: 500px;
+}
+
+#coupon-modal .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#coupon-modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+#coupon-modal .form-group input[type="text"],
+#coupon-modal .form-group input[type="number"],
+#coupon-modal .form-group input[type="date"],
+#coupon-modal .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#coupon-modal .form-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#coupon-modal .form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Style pour la section inventaire */
+.inventory-grid {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+#inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#inventory-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 500;
+}
+
+#inventory-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+#inventory-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.product-image-cell {
+    width: 60px;
+    height: 60px;
+    padding: 5px !important;
+}
+
+.product-image-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.add-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+.btn-edit, .btn-delete {
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-edit {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+}
+
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.stock-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.stock-normal {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stock-low {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stock-out {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Styles pour la section utilisateurs */
+.users-grid {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+#users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#users-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+#users-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.user-role {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.user-role.admin {
+    background: #e3f2fd;
+    color: var(--primary-color);
+}
+
+.user-role.user {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.password-btn {
+    background: var(--success-color);
+    color: white;
+}
+
+.password-btn:hover {
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+/* Ajouter ces styles pour le message d'erreur */
+.error-message {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    display: none;
+    padding: 8px;
+    background-color: #fff3f3;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+/* Style pour les champs de mot de passe invalides */
+input:invalid {
+    border-color: #dc3545;
+}
+
+/* Animation pour le message d'erreur */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.error-message.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Styles pour le modal de mot de passe */
+#password-modal .modal-content {
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+#password-modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+#password-modal h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+#password-modal .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#password-modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+#password-modal .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#password-modal .form-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    outline: none;
+}
+
+#password-modal .error-message {
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+    color: #d32f2f;
+    font-size: 0.9rem;
+    display: none;
+}
+
+#password-modal .error-message.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+#password-modal button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+#password-modal button[type="submit"]:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+#password-modal .close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#password-modal .close:hover {
+    color: var(--primary-color);
+}
+
+/* Animation pour le message d'erreur */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Style pour les champs invalides */
+#password-modal input:invalid {
+    border-color: #dc3545;
+}
+
+/* Icône de validation */
+.password-validation-icon {
+    position: absolute;
+    right: 12px;
+    top: 40px;
+    color: #4CAF50;
+    display: none;
+}
+
+.password-validation-icon.show {
+    display: block;
+}
+
+/* Indicateur de force du mot de passe */
+.password-strength {
+    height: 4px;
+    margin-top: 8px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    overflow: hidden;
+}
+
+.password-strength-bar {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-weak { background-color: #ff5252; width: 33.33%; }
+.strength-medium { background-color: #ffd740; width: 66.66%; }
+.strength-strong { background-color: #4caf50; width: 100%; }
+
+/* Styles pour le modal utilisateur */
+#user-modal .modal-content {
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+#user-modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+#user-modal h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+#user-modal .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#user-modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+#user-modal .form-group input,
+#user-modal .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+#user-modal .form-group input:focus,
+#user-modal .form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    outline: none;
+}
+
+#user-modal .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+#user-modal .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#user-modal .checkbox-label input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+#user-modal button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+#user-modal button[type="submit"]:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+#user-modal .close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#user-modal .close:hover {
+    color: var(--primary-color);
+}
+
+/* Style pour le select du rôle */
+#user-modal select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Animation d'entrée pour le modal */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#user-modal .modal-content {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Style pour les messages d'erreur */
+#user-modal .error-message {
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+    color: #d32f2f;
+    font-size: 0.9rem;
+    display: none;
+}
+
+#user-modal .error-message.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Style pour les champs désactivés */
+#user-modal input:disabled,
+#user-modal select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* Styles communs pour tous les modals */
+.modal-content {
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease-out;
+}
+
+.modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.modal h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+/* Styles spécifiques pour le modal des produits */
+#product-modal .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#product-modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+#product-modal .form-group input,
+#product-modal .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+#product-modal .form-group input:focus,
+#product-modal .form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    outline: none;
+}
+
+#product-modal .image-preview {
+    margin-top: 15px;
+    padding: 10px;
+    border: 2px dashed #e0e0e0;
+    border-radius: 6px;
+    text-align: center;
+}
+
+#product-modal .image-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 4px;
+}
+
+/* Styles spécifiques pour le modal des coupons */
+#coupon-modal .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#coupon-modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+#coupon-modal .form-group input,
+#coupon-modal .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+#coupon-modal .form-group input:focus,
+#coupon-modal .form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    outline: none;
+}
+
+#coupon-modal .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+#coupon-modal .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#coupon-modal small {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+/* Styles communs pour les boutons */
+.modal button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+
+.modal button[type="submit"]:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+.modal .close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.modal .close:hover {
+    color: var(--primary-color);
+}
+
+/* Style pour les selects */
+.modal select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Style pour les listes de sélection des coupons */
+.products-list, .categories-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.checkbox-group {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.2s ease;
+}
+
+.checkbox-group:last-child {
+    border-bottom: none;
+}
+
+.checkbox-group:hover {
+    background-color: #f8f9fa;
+}
+
+/* Animation d'entrée */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style pour les messages d'erreur */
+.modal .error-message {
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+    color: #d32f2f;
+    font-size: 0.9rem;
+    display: none;
+}
+
+.modal .error-message.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Style uniforme pour tous les boutons */
+.add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.add-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    background: linear-gradient(135deg, var(--hover-color), var(--primary-color));
+}
+
+.add-button i {
+    font-size: 1.1rem;
+} 

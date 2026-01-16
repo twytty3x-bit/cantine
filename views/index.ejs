@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cantine - POS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pos.css">
+</head>
+<body>
+    <div class="pos-container">
+        <div class="pos-header">
+            <div class="header-actions">
+                <button id="logout-btn" class="logout-btn" title="Déconnexion">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="logout-text">Déconnexion</span>
+                </button>
+                <a href="/admin" class="admin-link">
+                    <i class="fas fa-cog"></i>
+                    <span class="admin-text">Admin</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section gauche : Produits -->
+        <div class="products-section">
+            <div class="categories-bar">
+                <button class="category-btn active" data-category="all">Tous</button>
+                <!-- Les catégories seront ajoutées dynamiquement -->
+            </div>
+            <div class="products-grid" id="products-container">
+                <!-- Les produits seront ajoutés dynamiquement -->
+            </div>
+        </div>
+
+        <!-- Section droite : Panier -->
+        <div class="cart-section">
+            <div class="cart-header">
+                <h2>Panier actuel</h2>
+                <button id="clear-cart" class="clear-btn">
+                    <i class="fas fa-trash"></i> Vider
+                </button>
+            </div>
+            
+            <!-- Zone des produits -->
+            <div class="cart-items" id="cart-items">
+                <!-- Les articles du panier seront ajoutés ici -->
+            </div>
+            
+            <!-- Pied du panier -->
+            <div class="cart-footer">
+                <div class="amount-due">
+                    <span>Sous-total:</span>
+                    <span id="subtotal">0.00$</span>
+                </div>
+                
+                <!-- Nouvelle section coupons -->
+                <div class="coupons-section">
+                    <div class="coupons-header">
+                        <i class="fas fa-ticket-alt"></i>
+                        <h3>Coupons disponibles</h3>
+                    </div>
+                    <div id="coupon-info" class="coupon-info"></div>
+                    <div class="discount-amount" id="discount-amount" style="display: none;">
+                        <span>Réduction:</span>
+                        <span id="discount">0.00$</span>
+                    </div>
+                    <div class="available-coupons" id="available-coupons">
+                        <!-- Les coupons seront ajoutés ici dynamiquement -->
+                    </div>
+                </div>
+
+                <div class="total-amount">
+                    <span>Total à payer:</span>
+                    <span id="total">0.00$</span>
+                </div>
+                
+                <div class="payment-input">
+                    <label for="amount-received">Montant reçu:</label>
+                    <input type="number" id="amount-received" step="0.01">
+                </div>
+                <div class="change-due">
+                    <span>Monnaie à rendre:</span>
+                    <span id="change-amount">0.00$</span>
+                </div>
+                <button id="complete-sale" class="complete-btn" disabled>
+                    Compléter la vente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/pos.js"></script>
+</body>
+</html> 

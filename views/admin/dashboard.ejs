@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Cantine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <nav class="admin-sidebar">
+            <div class="admin-logo">
+                <h2>Cantine Admin</h2>
+            </div>
+            <ul class="admin-menu">
+                <li class="active" data-tab="inventory">
+                    <i class="fas fa-box"></i> Inventaire
+                </li>
+                <li data-tab="sales">
+                    <i class="fas fa-chart-line"></i> Ventes
+                </li>
+                <li data-tab="reports">
+                    <i class="fas fa-file-alt"></i> Rapports
+                </li>
+                <li data-tab="categories">
+                    <i class="fas fa-tags"></i> Catégories
+                </li>
+                <li data-tab="coupons">
+                    <i class="fas fa-ticket-alt"></i> Coupons
+                </li>
+                <li data-tab="users">
+                    <i class="fas fa-users"></i> Utilisateurs
+                </li>
+            </ul>
+            <div class="admin-footer">
+                <a href="/" class="back-to-site">
+                    <i class="fas fa-arrow-left"></i> Retour au site
+                </a>
+                <button onclick="logout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </nav>
+
+        <main class="admin-content">
+            <div class="tab-content active" id="inventory">
+                <div class="section-header">
+                    <h2>Inventaire</h2>
+                    <button class="add-button" onclick="openAddProductModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter un produit</span>
+                    </button>
+                </div>
+                <div class="inventory-grid">
+                    <table id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Prix de vente</th>
+                                <th>Prix coûtant</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="sales">
+                <div class="section-header">
+                    <h2>Ventes</h2>
+                    <div class="date-filter">
+                        <label>Du:</label>
+                        <input type="date" id="start-date">
+                        <label>Au:</label>
+                        <input type="date" id="end-date">
+                        <button class="add-button" onclick="filterSales()">
+                            <i class="fas fa-filter"></i>
+                            <span>Filtrer</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="sales-stats">
+                    <div class="stat-card">
+                        <h3>Ventes totales</h3>
+                        <p id="total-sales">0.00$</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Profit</h3>
+                        <p id="total-profit">0.00$</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Nombre de ventes</h3>
+                        <p id="sales-count">0</p>
+                    </div>
+                </div>
+
+                <!-- Historique des transactions -->
+                <div class="sales-table-section">
+                    <div class="table-header">
+                        <h2>Historique des transactions</h2>
+                        <div class="table-actions">
+                            <div class="date-filter">
+                                <label>Du:</label>
+                                <input type="date" id="start-date">
+                                <label>Au:</label>
+                                <input type="date" id="end-date">
+                                <button onclick="filterSales()" class="filter-btn">
+                                    <i class="fas fa-filter"></i> Filtrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <table id="sales-table">
+                        <thead>
+                            <tr>
+                                <th>Date et heure</th>
+                                <th>Articles vendus</th>
+                                <th>Montant total</th>
+                                <th>Profit</th>
+                                <th>Coupon utilisé</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="reports">
+                <div class="content-header">
+                    <h1>Rapports</h1>
+                    <div class="date-filter">
+                        <label>Du:</label>
+                        <input type="date" id="report-start-date">
+                        <label>Au:</label>
+                        <input type="date" id="report-end-date">
+                        <button onclick="filterReports()" class="filter-btn">
+                            <i class="fas fa-filter"></i> Filtrer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistiques globales -->
+                <div class="reports-summary">
+                    <div class="stat-card">
+                        <h3>Ventes totales</h3>
+                        <p id="total-sales-value">0.00$</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Profit total</h3>
+                        <p id="total-profit-value">0.00$</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Nombre de transactions</h3>
+                        <p id="total-transactions-value">0</p>
+                    </div>
+                </div>
+                
+                <!-- Rapports détaillés -->
+                <div class="reports-grid">
+                    <!-- Ventes par produit -->
+                    <div class="report-card">
+                        <h3>Ventes par produit</h3>
+                        <div class="table-container">
+                            <table id="product-sales-table">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Quantité</th>
+                                        <th>Ventes</th>
+                                        <th>Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Ventes par catégorie -->
+                    <div class="report-card">
+                        <h3>Ventes par catégorie</h3>
+                        <div class="table-container">
+                            <table id="category-sales-table">
+                                <thead>
+                                    <tr>
+                                        <th>Catégorie</th>
+                                        <th>Ventes</th>
+                                        <th>Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Utilisation des coupons -->
+                    <div class="report-card">
+                        <h3>Utilisation des coupons</h3>
+                        <div class="table-container">
+                            <table id="coupon-usage-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Valeur</th>
+                                        <th>Utilisations</th>
+                                        <th>Réduction totale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Ventes avec coupons -->
+                    <div class="report-card">
+                        <h3>Ventes avec coupons</h3>
+                        <div class="table-container">
+                            <table id="sales-with-coupons-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Coupon</th>
+                                        <th>Produits</th>
+                                        <th>Total initial</th>
+                                        <th>Réduction</th>
+                                        <th>Total final</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Produits vendus avec coupons -->
+                    <div class="report-card">
+                        <h3>Produits vendus avec coupons</h3>
+                        <div class="table-container">
+                            <table id="products-with-coupons-table">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Quantité vendue</th>
+                                        <th>Nombre de coupons utilisés</th>
+                                        <th>Réduction totale</th>
+                                        <th>Total des ventes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="categories">
+                <div class="section-header">
+                    <h2>Gestion des catégories</h2>
+                    <button class="add-button" onclick="openAddCategoryModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter une catégorie</span>
+                    </button>
+                </div>
+                <div class="categories-grid">
+                    <table id="categories-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="coupons" class="tab-content">
+                <div class="section-header">
+                    <h2>Gestion des coupons</h2>
+                    <button class="add-button" onclick="openAddCouponModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter un coupon</span>
+                    </button>
+                </div>
+                <div class="coupons-grid">
+                    <table id="coupons-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Valeur</th>
+                                <th>Période de validité</th>
+                                <th>Utilisations</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="users">
+                <div class="section-header">
+                    <h2>Gestion des utilisateurs</h2>
+                    <button class="add-button" onclick="openAddUserModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter un utilisateur</span>
+                    </button>
+                </div>
+                <div class="users-grid">
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Nom d'utilisateur</th>
+                                <th>Rôle</th>
+                                <th>Statut</th>
+                                <th>Dernière connexion</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal d'ajout/modification de produit -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Ajouter un produit</h2>
+            <form id="product-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="product-name">Nom</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-category">Catégorie</label>
+                    <select id="product-category" required>
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">Prix unitaire</label>
+                    <input type="text" 
+                           id="product-price" 
+                           pattern="[0-9]*[.,]?[0-9]*" 
+                           required 
+                           placeholder="0.000">
+                </div>
+                <div class="form-group">
+                    <label for="product-cost">Prix d'achat</label>
+                    <input type="number" id="product-cost" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-stock">Stock</label>
+                    <input type="number" id="product-stock" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-image">Image</label>
+                    <input type="file" id="product-image" accept="image/*">
+                    <div class="image-preview" id="image-preview"></div>
+                </div>
+                <button type="submit">Sauvegarder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pour les catégories -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ajouter une catégorie</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="category-form">
+                <div class="form-group">
+                    <label for="category-name">Nom de la catégorie</label>
+                    <input type="text" id="category-name" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="category-active">
+                        Actif
+                    </label>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('category-modal').style.display='none'">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ajouter un modal pour éditer les transactions -->
+    <div id="sale-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Modifier la transaction</h2>
+            <form id="sale-form">
+                <div class="sale-items">
+                    <!-- Les items seront ajoutés ici dynamiquement -->
+                </div>
+                <div class="form-group">
+                    <label for="payment-received">Montant reçu</label>
+                    <input type="number" id="payment-received" step="0.01" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">Sauvegarder</button>
+                    <button type="button" class="delete-btn" onclick="deleteSale()">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ajouter le modal des coupons -->
+    <div id="coupon-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Ajouter un coupon</h2>
+            <form id="coupon-form">
+                <div class="form-group">
+                    <label for="coupon-code">Code</label>
+                    <input type="text" id="coupon-code" required>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-type">Type de réduction</label>
+                    <select id="coupon-type" required>
+                        <option value="percentage">Pourcentage</option>
+                        <option value="fixed">Montant fixe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-value">Valeur</label>
+                    <input type="number" id="coupon-value" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-start">Date de début</label>
+                    <input type="date" id="coupon-start" required>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-end">Date de fin</label>
+                    <input type="date" id="coupon-end" required>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-limit">Limite d'utilisation</label>
+                    <input type="number" id="coupon-limit" min="0">
+                    <small>Laisser vide pour illimité</small>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="coupon-active" checked>
+                        Coupon actif
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="coupon-application">Type d'application</label>
+                    <select id="coupon-application" required>
+                        <option value="all">Tous les produits</option>
+                        <option value="product">Produits spécifiques</option>
+                        <option value="category">Catégories spécifiques</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="products-selection" style="display: none;">
+                    <label>Produits applicables</label>
+                    <div class="products-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+
+                <div class="form-group" id="categories-selection" style="display: none;">
+                    <label>Catégories applicables</label>
+                    <div class="categories-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+
+                <button type="submit">Sauvegarder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ajouter le modal pour les utilisateurs -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Ajouter un utilisateur</h2>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="user-username">Nom d'utilisateur</label>
+                    <input type="text" id="user-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-password">Mot de passe</label>
+                    <input type="password" id="user-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-role">Rôle</label>
+                    <select id="user-role" required>
+                        <option value="user">Utilisateur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="user-active" checked>
+                        Utilisateur actif
+                    </label>
+                </div>
+                <button type="submit">Sauvegarder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pour changer le mot de passe -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Changer le mot de passe</h2>
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="new-password">Nouveau mot de passe</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirmer le mot de passe</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+                <div class="error-message" id="password-error"></div>
+                <button type="submit">Mettre à jour</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/admin.js"></script>
+</body>
+</html> 

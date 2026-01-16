@@ -1,0 +1,24 @@
+Cantine/
+├── public/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── main.js
+│   └── images/
+├── views/
+│   ├── index.ejs
+│   ├── admin.ejs
+│   └── partials/
+│       ├── header.ejs
+│       └── footer.ejs
+├── routes/
+│   ├── index.js
+│   └── admin.js
+├── models/
+│   ├── Product.js
+│   └── Order.js
+├── config/
+│   └── database.js
+├── app.js
+├── package.json
+└── .env 
