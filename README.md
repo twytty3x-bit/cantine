@@ -1,5 +1,7 @@
 # Cantine - Système de Gestion de Point de Vente
 
+> **📦 Guide de déploiement** : Pour déployer cette application sur un serveur EC2 Ubuntu, consultez le guide complet dans [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 Application web complète pour la gestion d'une cantine avec système de point de vente (POS) et panneau d'administration.
 
 ## 🚀 Fonctionnalités

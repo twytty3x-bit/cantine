@@ -38,6 +38,7 @@ Thumbs.db
 # Fichiers temporaires
 *.tmp
 *.temp
+temp_uploads/
 
 # Fichiers uploads (garder le dossier mais ignorer le contenu)
 public/uploads/products/*
