@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vente de Tickets - Moitié-Moitié</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/tickets-seller.css">
+</head>
+<body>
+    <div class="tickets-seller-container">
+        <div class="tickets-seller-header">
+            <div class="header-content">
+                <h1><i class="fas fa-ticket-alt"></i> Vente de Tickets - Moitié-Moitié</h1>
+                <p>Interface de vente simplifiée</p>
+            </div>
+            <div class="header-actions">
+                <button id="logout-btn" class="logout-btn" onclick="handleLogout(event)">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="tickets-seller-content">
+            <!-- Modal pour la vente de tickets -->
+            <div id="ticket-sale-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeTicketSaleModal()">&times;</span>
+                    <h2><i class="fas fa-ticket-alt"></i> Vente de Tickets</h2>
+                    <form id="ticket-sale-form">
+                        <div class="form-group">
+                            <label for="ticket-email">
+                                <i class="fas fa-envelope"></i>
+                                Adresse email du client
+                            </label>
+                            <input type="email" id="ticket-email" required placeholder="client@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-tags"></i>
+                                Sélectionner une offre
+                            </label>
+                            <div id="offers-selection" class="offers-selection">
+                                <!-- Les offres seront ajoutées ici dynamiquement -->
+                            </div>
+                            <input type="hidden" id="ticket-quantity" required>
+                            <input type="hidden" id="ticket-price" required>
+                            <div id="ticket-offer-info" class="ticket-offer-info" style="display: none;"></div>
+                        </div>
+                        <div class="ticket-total-display">
+                            <span>Total:</span>
+                            <span id="ticket-total">0.00$</span>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary" id="add-tickets-btn" disabled>
+                                <i class="fas fa-shopping-cart"></i>
+                                Vendre les tickets
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="closeTicketSaleModal()">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Zone principale -->
+            <div class="main-action-area">
+                <button class="sell-ticket-btn" onclick="openTicketSaleModal()">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Vendre des tickets</span>
+                </button>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="stats-section">
+                <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total de tickets</div>
+                            <div class="stat-value" id="stat-total-tickets">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-label">Montant total</div>
+                            <div class="stat-value" id="stat-total-amount">0.00$</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-label">Aujourd'hui</div>
+                            <div class="stat-value" id="stat-today-tickets">0</div>
+                            <div class="stat-subvalue" id="stat-today-amount">0.00$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/tickets-seller.js"></script>
+</body>
+</html>

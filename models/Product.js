@@ -32,7 +32,19 @@ const productSchema = new mongoose.Schema({
     image: {
         type: String,
         default: '/uploads/products/default.jpg'
-    }
+    },
+    quantityPrices: [{
+        quantity: {
+            type: Number,
+            required: true,
+            min: 1
+        },
+        price: {
+            type: Number,
+            required: true,
+            min: 0
+        }
+    }]
 }, {
     timestamps: true
 });

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achat de Coupons - Cantine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/tickets.css">
+</head>
+<body>
+    <div class="tickets-container">
+        <div class="tickets-header">
+            <h1><i class="fas fa-ticket-alt"></i> Achat de Coupons</h1>
+            <p>Participez au tirage au sort en achetant des coupons !</p>
+        </div>
+
+        <div class="tickets-content">
+            <div class="purchase-section">
+                <h2>Acheter des coupons</h2>
+                <form id="purchase-form">
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            Adresse email
+                        </label>
+                        <input type="email" id="email" name="email" required placeholder="votre@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">
+                            <i class="fas fa-hashtag"></i>
+                            Nombre de coupons
+                        </label>
+                        <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required>
+                        <small>Prix unitaire: 0.50$</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="payment-method">
+                            <i class="fas fa-credit-card"></i>
+                            Mode de paiement
+                        </label>
+                        <select id="payment-method" name="paymentMethod" required>
+                            <option value="cash">Espèces</option>
+                            <option value="card">Carte</option>
+                        </select>
+                    </div>
+
+                    <div class="total-display">
+                        <span>Total:</span>
+                        <span id="total-amount">0.50$</span>
+                    </div>
+
+                    <button type="submit" class="purchase-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        Acheter les coupons
+                    </button>
+                </form>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fas fa-info-circle"></i> Comment ça fonctionne ?</h3>
+                <ul>
+                    <li>Chaque coupon coûte <strong>0.50$</strong></li>
+                    <li>Vous recevrez vos numéros de coupons par email</li>
+                    <li>Ces numéros vous permettront de participer au tirage au sort</li>
+                    <li>Un gagnant sera tiré au hasard parmi tous les numéros vendus</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="success-message" class="success-message" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <h3>Achat réussi !</h3>
+            <p>Vos numéros de coupons ont été envoyés à votre adresse email.</p>
+            <div id="ticket-numbers" class="ticket-numbers"></div>
+        </div>
+    </div>
+
+    <script src="/js/tickets.js"></script>
+</body>
+</html>

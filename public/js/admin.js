@@ -22,6 +22,8 @@ document.querySelectorAll('.admin-menu li').forEach(tab => {
             loadCoupons();
         } else if (tab.dataset.tab === 'users') {
             loadUsers();
+        } else if (tab.dataset.tab === 'smtp') {
+            loadSMTPConfig();
         }
     });
 });
@@ -633,51 +635,147 @@ async function loadReports() {
         // Afficher les statistiques globales
         if (data.overall) {
             console.log('6. Mise à jour des statistiques globales');
+            const totalSales = Number(data.overall.totalSales || 0);
+            const totalProfit = Number(data.overall.totalProfit || 0);
+            const totalTransactions = data.overall.count || 0;
+            const averageCart = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+            
             document.getElementById('total-sales-value').textContent = 
-                `${Number(data.overall.totalSales || 0).toFixed(2)}$`;
+                `${totalSales.toFixed(2)}$`;
             document.getElementById('total-profit-value').textContent = 
-                `${Number(data.overall.totalProfit || 0).toFixed(2)}$`;
+                `${totalProfit.toFixed(2)}$`;
             document.getElementById('total-transactions-value').textContent = 
-                data.overall.count || 0;
+                totalTransactions;
+            document.getElementById('average-cart-value').textContent = 
+                `${averageCart.toFixed(2)}$`;
+            
+            // Animer les valeurs
+            animateValue('total-sales-value', 0, totalSales, 1000, '$');
+            animateValue('total-profit-value', 0, totalProfit, 1000, '$');
+            animateValue('total-transactions-value', 0, totalTransactions, 1000, '');
+            animateValue('average-cart-value', 0, averageCart, 1000, '$');
         }
 
         // Afficher les ventes par produit
         console.log('7. Mise à jour des ventes par produit');
         const productTableBody = document.querySelector('#product-sales-table tbody');
         if (data.popularProducts && Array.isArray(data.popularProducts) && data.popularProducts.length > 0) {
+            // Trouver la valeur maximale pour la barre de progression
+            const maxSales = Math.max(...data.popularProducts.map(p => Number(p.totalSales || 0)));
+            
             productTableBody.innerHTML = '';
-            data.popularProducts.forEach(product => {
+            data.popularProducts.forEach((product, index) => {
+                const sales = Number(product.totalSales || 0);
+                const profit = Number(product.profit || 0);
+                const percentage = maxSales > 0 ? (sales / maxSales * 100) : 0;
+                const profitMargin = sales > 0 ? (profit / sales * 100) : 0;
+                
                 const tr = document.createElement('tr');
+                tr.style.animationDelay = `${index * 0.05}s`;
+                tr.className = 'fade-in';
                 tr.innerHTML = `
-                    <td>${product.name || 'N/A'}</td>
-                    <td>${product.totalQuantity || 0}</td>
-                    <td>${Number(product.totalSales || 0).toFixed(2)}$</td>
-                    <td>${Number(product.profit || 0).toFixed(2)}$</td>
+                    <td>
+                        <div class="product-cell">
+                            <span class="product-rank">#${index + 1}</span>
+                            <span class="product-name">${product.name || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td><span class="badge quantity">${product.totalQuantity || 0}</span></td>
+                    <td><strong>${sales.toFixed(2)}$</strong></td>
+                    <td>
+                        <span class="profit-amount ${profit >= 0 ? 'positive' : 'negative'}">
+                            ${profit.toFixed(2)}$
+                        </span>
+                    </td>
+                    <td>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${percentage}%"></div>
+                            <span class="progress-text">${percentage.toFixed(0)}%</span>
+                        </div>
+                    </td>
                 `;
                 productTableBody.appendChild(tr);
             });
         } else {
             productTableBody.innerHTML = 
-                '<tr><td colspan="4" class="no-data">Aucune donnée disponible</td></tr>';
+                '<tr><td colspan="5" class="no-data"><i class="fas fa-inbox"></i> Aucune donnée disponible</td></tr>';
         }
 
         // Afficher les ventes par catégorie
         console.log('8. Mise à jour des ventes par catégorie');
         const categoryTableBody = document.querySelector('#category-sales-table tbody');
+        const categoryChartContainer = document.getElementById('category-chart-container');
+        
         if (data.categoryStats && Array.isArray(data.categoryStats) && data.categoryStats.length > 0) {
+            // Calculer le total pour les pourcentages
+            const totalCategorySales = data.categoryStats.reduce((sum, cat) => 
+                sum + Number(cat.totalSales || 0), 0);
+            
+            // Créer le graphique visuel
+            if (categoryChartContainer) {
+                categoryChartContainer.innerHTML = '';
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'category-chart';
+                
+                data.categoryStats.forEach((category, index) => {
+                    const sales = Number(category.totalSales || 0);
+                    const percentage = totalCategorySales > 0 ? (sales / totalCategorySales * 100) : 0;
+                    const categoryName = category.category || category._id || 'N/A';
+                    
+                    const barDiv = document.createElement('div');
+                    barDiv.className = 'chart-bar-item';
+                    barDiv.innerHTML = `
+                        <div class="chart-bar-label">
+                            <span>${categoryName}</span>
+                            <span class="chart-bar-value">${sales.toFixed(2)}$</span>
+                        </div>
+                        <div class="chart-bar-wrapper">
+                            <div class="chart-bar" style="width: ${percentage}%" data-percentage="${percentage.toFixed(1)}%"></div>
+                        </div>
+                    `;
+                    chartDiv.appendChild(barDiv);
+                });
+                
+                categoryChartContainer.appendChild(chartDiv);
+            }
+            
+            // Remplir le tableau
             categoryTableBody.innerHTML = '';
-            data.categoryStats.forEach(category => {
+            data.categoryStats.forEach((category, index) => {
+                const sales = Number(category.totalSales || 0);
+                const profit = Number(category.profit || 0);
+                const percentage = totalCategorySales > 0 ? (sales / totalCategorySales * 100) : 0;
+                
                 const tr = document.createElement('tr');
+                tr.style.animationDelay = `${index * 0.05}s`;
+                tr.className = 'fade-in';
                 tr.innerHTML = `
-                    <td>${category.category || category._id || 'N/A'}</td>
-                    <td>${Number(category.totalSales || 0).toFixed(2)}$</td>
-                    <td>${Number(category.profit || 0).toFixed(2)}$</td>
+                    <td>
+                        <div class="category-cell">
+                            <span class="category-icon"><i class="fas fa-tag"></i></span>
+                            <span>${category.category || category._id || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td><strong>${sales.toFixed(2)}$</strong></td>
+                    <td>
+                        <span class="profit-amount ${profit >= 0 ? 'positive' : 'negative'}">
+                            ${profit.toFixed(2)}$
+                        </span>
+                    </td>
+                    <td>
+                        <div class="percentage-badge">
+                            ${percentage.toFixed(1)}%
+                        </div>
+                    </td>
                 `;
                 categoryTableBody.appendChild(tr);
             });
         } else {
+            if (categoryChartContainer) {
+                categoryChartContainer.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i> Aucune donnée disponible</div>';
+            }
             categoryTableBody.innerHTML = 
-                '<tr><td colspan="3" class="no-data">Aucune donnée disponible</td></tr>';
+                '<tr><td colspan="4" class="no-data"><i class="fas fa-inbox"></i> Aucune donnée disponible</td></tr>';
         }
 
         console.log('9. Chargement des statistiques des coupons');
@@ -703,8 +801,8 @@ async function loadReports() {
         document.getElementById('total-transactions-value').textContent = '0';
 
         const tables = {
-            '#product-sales-table': 4,
-            '#category-sales-table': 3,
+            '#product-sales-table': 5,
+            '#category-sales-table': 4,
             '#coupon-usage-table': 5,
             '#sales-with-coupons-table': 6
         };
@@ -719,6 +817,45 @@ async function loadReports() {
 // Ajouter la fonction de filtrage des rapports
 function filterReports() {
     loadReports();
+}
+
+// Réinitialiser les filtres
+function resetReportsFilter() {
+    document.getElementById('report-start-date').value = '';
+    document.getElementById('report-end-date').value = '';
+    loadReports();
+}
+
+// Fonction pour animer les valeurs
+function animateValue(id, start, end, duration, suffix = '') {
+    const element = document.getElementById(id);
+    if (!element) return;
+    
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            current = end;
+            clearInterval(timer);
+        }
+        
+        if (suffix === '$') {
+            element.textContent = `${current.toFixed(2)}${suffix}`;
+        } else if (suffix === '') {
+            element.textContent = Math.round(current);
+        } else {
+            element.textContent = `${current.toFixed(2)}${suffix}`;
+        }
+    }, 16);
+}
+
+// Fonction pour exporter les ventes par produit
+function exportProductSales() {
+    // TODO: Implémenter l'export
+    alert('Fonction d\'export à implémenter');
 }
 
 // Ajouter les fonctions de gestion des coupons
@@ -1004,16 +1141,30 @@ function displayCouponReports(data) {
 // Ajouter la fonction de déconnexion
 async function logout() {
     try {
-        const response = await fetch('/auth/logout');
+        const response = await fetch('/auth/logout', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
         if (response.ok) {
-            // Rediriger vers la page de login
-            window.location.href = '/login';
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = '/login';
+            } else {
+                // En cas d'erreur, forcer la redirection
+                window.location.href = '/login';
+            }
         } else {
-            throw new Error('Erreur lors de la déconnexion');
+            // En cas d'erreur HTTP, forcer la redirection
+            window.location.href = '/login';
         }
     } catch (error) {
         console.error('Erreur de déconnexion:', error);
-        alert('Erreur lors de la déconnexion');
+        // Forcer la redirection même en cas d'erreur
+        window.location.href = '/login';
     }
 }
 
@@ -1050,7 +1201,7 @@ async function loadUsers() {
                 <td>${user.username}</td>
                 <td>
                     <span class="user-role ${user.role}">
-                        ${user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+                        ${user.role === 'admin' ? 'Administrateur' : user.role === 'ticket_seller' ? 'Vendeur de tickets' : 'Utilisateur'}
                     </span>
                 </td>
                 <td>
@@ -1216,9 +1367,839 @@ async function deleteUser(userId) {
     }
 }
 
+// ============================================
+// FONCTIONS D'EXPORT/IMPORT
+// ============================================
+
+// Exporter les données
+async function exportData() {
+    try {
+        // Vérifier qu'au moins une option est sélectionnée
+        const exportProducts = document.getElementById('export-products').checked;
+        const exportCategories = document.getElementById('export-categories').checked;
+        const exportCoupons = document.getElementById('export-coupons').checked;
+        const exportUsers = document.getElementById('export-users').checked;
+        const exportSales = document.getElementById('export-sales').checked;
+        
+        if (!exportProducts && !exportCategories && !exportCoupons && !exportUsers && !exportSales) {
+            alert('Veuillez sélectionner au moins une option à exporter.');
+            return;
+        }
+        
+        // Construire l'URL avec les paramètres
+        const params = new URLSearchParams({
+            products: exportProducts,
+            categories: exportCategories,
+            coupons: exportCoupons,
+            users: exportUsers,
+            sales: exportSales
+        });
+        
+        const url = `/api/export?${params.toString()}`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'export');
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        
+        // Créer un nom de fichier descriptif
+        const selectedOptions = [];
+        if (exportProducts) selectedOptions.push('produits');
+        if (exportCategories) selectedOptions.push('categories');
+        if (exportCoupons) selectedOptions.push('coupons');
+        if (exportUsers) selectedOptions.push('users');
+        if (exportSales) selectedOptions.push('ventes');
+        
+        link.download = `cantine-export-${selectedOptions.join('-')}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        alert('Export réussi ! Le fichier a été téléchargé.');
+    } catch (error) {
+        console.error('Erreur lors de l\'export:', error);
+        alert('Erreur lors de l\'export : ' + error.message);
+    }
+}
+
+// Gérer la sélection de fichier
+document.addEventListener('DOMContentLoaded', () => {
+    const importFile = document.getElementById('import-file');
+    const importBtn = document.getElementById('import-btn');
+    const fileName = document.getElementById('selected-file-name');
+    
+    if (importFile) {
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Fichier sélectionné : ${file.name}`;
+                importBtn.disabled = false;
+            } else {
+                fileName.textContent = '';
+                importBtn.disabled = true;
+            }
+        });
+    }
+});
+
+// Importer les données
+async function importData() {
+    const fileInput = document.getElementById('import-file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Veuillez sélectionner un fichier');
+        return;
+    }
+    
+    if (!confirm('Êtes-vous sûr de vouloir importer ces données ? Cette action peut modifier vos données existantes.')) {
+        return;
+    }
+    
+    try {
+        const fileContent = await file.text();
+        const data = JSON.parse(fileContent);
+        
+        // Vérifier que c'est un fichier d'export valide
+        if (!data.exportDate && !data.products && !data.categories) {
+            throw new Error('Fichier invalide. Veuillez utiliser un fichier d\'export valide.');
+        }
+        
+        const options = {
+            importProducts: document.getElementById('import-products').checked,
+            importCategories: document.getElementById('import-categories').checked,
+            importCoupons: document.getElementById('import-coupons').checked,
+            importUsers: document.getElementById('import-users').checked,
+            importSales: document.getElementById('import-sales').checked,
+            overwrite: document.getElementById('import-overwrite').checked
+        };
+        
+        const response = await fetch('/api/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data, options })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Erreur lors de l\'import');
+        }
+        
+        // Afficher les résultats
+        displayImportResults(result);
+        
+        // Recharger les données si nécessaire
+        if (options.importProducts) {
+            loadInventory();
+        }
+        if (options.importCategories) {
+            // Recharger les catégories si nécessaire
+        }
+        if (options.importCoupons) {
+            loadCoupons();
+        }
+        if (options.importUsers) {
+            loadUsers();
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'import:', error);
+        alert('Erreur lors de l\'import : ' + error.message);
+    }
+}
+
+// Afficher les résultats de l'import
+function displayImportResults(result) {
+    const resultsDiv = document.getElementById('import-results');
+    resultsDiv.style.display = 'block';
+    resultsDiv.className = 'import-results success';
+    
+    let html = '<h4>Import terminé avec succès</h4>';
+    html += '<table>';
+    html += '<tr><th>Type</th><th>Importés</th><th>Erreurs</th></tr>';
+    
+    const types = ['products', 'categories', 'coupons', 'users', 'sales'];
+    types.forEach(type => {
+        if (result.results[type]) {
+            const r = result.results[type];
+            html += `<tr>
+                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                <td>${r.imported}</td>
+                <td>${r.errors.length}</td>
+            </tr>`;
+        }
+    });
+    
+    html += '</table>';
+    
+    // Afficher les erreurs s'il y en a
+    let hasErrors = false;
+    types.forEach(type => {
+        if (result.results[type] && result.results[type].errors.length > 0) {
+            hasErrors = true;
+        }
+    });
+    
+    if (hasErrors) {
+        html += '<h4 style="margin-top: 15px;">Erreurs rencontrées :</h4>';
+        types.forEach(type => {
+            if (result.results[type] && result.results[type].errors.length > 0) {
+                html += `<p><strong>${type}:</strong></p><ul>`;
+                result.results[type].errors.forEach(err => {
+                    html += `<li>${err.name || err.code || 'Inconnu'}: ${err.error}</li>`;
+                });
+                html += '</ul>';
+            }
+        });
+        resultsDiv.className = 'import-results error';
+    }
+    
+    resultsDiv.innerHTML = html;
+    
+    // Scroll vers les résultats
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 // Ajouter loadUsers à l'initialisation
 document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-tab="users"]')) {
         loadUsers();
     }
+    
+    if (document.querySelector('[data-tab="tickets"]')) {
+        loadTicketsStats();
+        loadTickets();
+        loadTicketConfig();
+    }
+    
+    if (document.querySelector('[data-tab="smtp"]')) {
+        loadSMTPConfig();
+    }
 });
+
+// ============================================
+// FONCTIONS POUR LA GESTION DES TICKETS
+// ============================================
+
+let currentTicketsPage = 1;
+let ticketsFilters = {};
+
+// Charger les statistiques des tickets
+async function loadTicketsStats() {
+    try {
+        const response = await fetch('/api/tickets/stats');
+        if (!response.ok) throw new Error('Erreur lors du chargement des statistiques');
+        
+        const stats = await response.json();
+        
+        document.getElementById('total-tickets').textContent = stats.totalTickets || 0;
+        document.getElementById('total-amount-stats').textContent = (stats.totalAmount || 0).toFixed(2) + '$';
+        document.getElementById('total-winners').textContent = stats.totalWinners || 0;
+        document.getElementById('eligible-tickets').textContent = (stats.totalTickets - stats.totalWinners) || 0;
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+// Charger la liste des tickets
+async function loadTickets(page = 1) {
+    try {
+        const email = document.getElementById('filter-email')?.value || '';
+        const isWinner = document.getElementById('filter-winner')?.value || '';
+        const status = document.getElementById('filter-status')?.value || '';
+        
+        const params = new URLSearchParams({
+            page: page.toString(),
+            limit: '50'
+        });
+        
+        if (email) params.append('email', email);
+        if (isWinner) params.append('isWinner', isWinner);
+        if (status) params.append('status', status);
+        
+        const response = await fetch(`/api/tickets?${params.toString()}`);
+        if (!response.ok) throw new Error('Erreur lors du chargement des tickets');
+        
+        const data = await response.json();
+        currentTicketsPage = page;
+        
+        // Afficher les tickets
+        const tbody = document.querySelector('#tickets-table tbody');
+        tbody.innerHTML = '';
+        
+        if (data.tickets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Aucun ticket trouvé</td></tr>';
+        } else {
+            data.tickets.forEach(ticket => {
+                const row = document.createElement('tr');
+                row.className = ticket.isWinner ? 'winner-row' : '';
+                const statusBadge = ticket.status === 'cancelled' 
+                    ? '<span class="badge cancelled-badge"><i class="fas fa-times-circle"></i> Annulé</span>'
+                    : ticket.isWinner 
+                        ? '<span class="badge winner-badge"><i class="fas fa-trophy"></i> Gagnant</span>' 
+                        : '<span class="badge active-badge"><i class="fas fa-check-circle"></i> Actif</span>';
+                
+                const actions = ticket.status === 'cancelled'
+                    ? '<span style="color: #999; font-size: 0.9rem;">Annulé</span>'
+                    : ticket.isWinner 
+                        ? `<button onclick="resetWinner('${ticket._id}')" class="btn-small btn-secondary">
+                            <i class="fas fa-undo"></i> Réinitialiser
+                           </button>`
+                        : `<button onclick="cancelTicket('${ticket._id}', '${ticket.ticketNumber}')" class="btn-small btn-danger">
+                            <i class="fas fa-ban"></i> Annuler
+                           </button>`;
+                
+                row.innerHTML = `
+                    <td><strong>${ticket.ticketNumber}</strong></td>
+                    <td>${ticket.email}</td>
+                    <td>${new Date(ticket.purchaseDate).toLocaleDateString('fr-FR')}</td>
+                    <td>${ticket.totalAmount.toFixed(2)}$</td>
+                    <td>${statusBadge}</td>
+                    <td>${actions}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Afficher la pagination
+        displayTicketsPagination(data.totalPages, page);
+        
+        // Recharger les stats
+        loadTicketsStats();
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement des tickets');
+    }
+}
+
+// Afficher la pagination
+function displayTicketsPagination(totalPages, currentPage) {
+    const paginationDiv = document.getElementById('tickets-pagination');
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="pagination-controls">';
+    
+    if (currentPage > 1) {
+        html += `<button onclick="loadTickets(${currentPage - 1})" class="page-btn">
+            <i class="fas fa-chevron-left"></i> Précédent
+        </button>`;
+    }
+    
+    html += `<span>Page ${currentPage} sur ${totalPages}</span>`;
+    
+    if (currentPage < totalPages) {
+        html += `<button onclick="loadTickets(${currentPage + 1})" class="page-btn">
+            Suivant <i class="fas fa-chevron-right"></i>
+        </button>`;
+    }
+    
+    html += '</div>';
+    paginationDiv.innerHTML = html;
+}
+
+// Tirer un gagnant
+async function drawWinner() {
+    if (!confirm('Êtes-vous sûr de vouloir effectuer un tirage au sort ? Un gagnant sera sélectionné aléatoirement.')) {
+        return;
+    }
+    
+    const drawBtn = document.getElementById('draw-btn');
+    const resultDiv = document.getElementById('draw-result');
+    
+    drawBtn.disabled = true;
+    drawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Tirage en cours...';
+    
+    try {
+        const response = await fetch('/api/tickets/draw', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ excludeWinners: true })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'draw-result success';
+            resultDiv.innerHTML = `
+                <h3><i class="fas fa-trophy"></i> Gagnant sélectionné !</h3>
+                <div class="winner-info">
+                    <p><strong>Numéro gagnant:</strong> <span class="ticket-number">${data.winner.ticketNumber}</span></p>
+                    <p><strong>Email:</strong> ${data.winner.email}</p>
+                    <p><strong>Date d'achat:</strong> ${new Date(data.winner.purchaseDate).toLocaleDateString('fr-FR')}</p>
+                    <p class="success-note">Un email a été envoyé au gagnant.</p>
+                </div>
+            `;
+            
+            // Recharger la liste
+            loadTickets(currentTicketsPage);
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'draw-result error';
+            resultDiv.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> ${data.message || 'Erreur lors du tirage'}</p>`;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'draw-result error';
+        resultDiv.innerHTML = '<p><i class="fas fa-exclamation-triangle"></i> Erreur lors du tirage au sort</p>';
+    } finally {
+        drawBtn.disabled = false;
+        drawBtn.innerHTML = '<i class="fas fa-magic"></i> <span>Tirer un gagnant</span>';
+    }
+}
+
+// Réinitialiser tous les billets (supprimer tous les billets)
+async function resetAllTickets() {
+    // Double confirmation
+    const confirm1 = prompt('ATTENTION : Cette action supprimera TOUS les billets de manière permanente.\n\nPour confirmer, tapez "SUPPRIMER TOUS" (en majuscules):');
+    
+    if (confirm1 !== 'SUPPRIMER TOUS') {
+        alert('Action annulée. La confirmation ne correspond pas.');
+        return;
+    }
+    
+    if (!confirm('Êtes-vous ABSOLUMENT SÛR de vouloir supprimer TOUS les billets ?\n\nCette action est IRRÉVERSIBLE et supprimera tous les billets, y compris les gagnants.')) {
+        return;
+    }
+    
+    const resetBtn = document.getElementById('reset-all-btn');
+    const originalText = resetBtn.innerHTML;
+    
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression en cours...';
+    
+    try {
+        const response = await fetch('/api/tickets/all', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ confirm: 'DELETE_ALL_TICKETS' })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`Tous les billets ont été supprimés avec succès.\n\n${data.deletedCount} billet(s) supprimé(s).`);
+            // Recharger les données
+            loadTickets(1);
+            loadTicketsStats();
+            loadTicketLogs();
+        } else {
+            alert(data.message || 'Erreur lors de la suppression des billets');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la suppression des billets');
+    } finally {
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = originalText;
+    }
+}
+
+// Réinitialiser un gagnant
+async function resetWinner(ticketId) {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser ce gagnant ?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/tickets/${ticketId}/reset-winner`, {
+            method: 'PUT'
+        });
+        
+        if (response.ok) {
+            loadTickets(currentTicketsPage);
+            loadTicketsStats();
+        } else {
+            const data = await response.json();
+            alert(data.message || 'Erreur lors de la réinitialisation');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la réinitialisation');
+    }
+}
+
+// Annuler un billet
+async function cancelTicket(ticketId, ticketNumber) {
+    let reason = '';
+    
+    // Demander la raison jusqu'à ce qu'elle soit fournie
+    while (!reason || reason.trim() === '') {
+        reason = prompt(`Voulez-vous annuler le billet ${ticketNumber} ?\n\nRaison de l'annulation (obligatoire):`);
+        
+        if (reason === null) {
+            return; // L'utilisateur a annulé
+        }
+        
+        if (!reason || reason.trim() === '') {
+            alert('La raison de l\'annulation est obligatoire. Veuillez entrer une raison.');
+        }
+    }
+    
+    if (!confirm(`Êtes-vous sûr de vouloir annuler le billet ${ticketNumber} ?\n\nRaison: ${reason}\n\nCette action sera enregistrée dans les logs.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/tickets/${ticketId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason.trim() })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Billet annulé avec succès. L\'action a été enregistrée dans les logs.');
+            loadTickets(currentTicketsPage);
+            loadTicketsStats();
+            loadTicketLogs(); // Recharger les logs
+        } else {
+            alert(data.message || 'Erreur lors de l\'annulation du billet');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'annulation du billet');
+    }
+}
+
+// Charger les logs d'annulation
+let currentLogsPage = 1;
+
+async function loadTicketLogs(page = 1) {
+    try {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            limit: '50',
+            action: 'cancelled'
+        });
+        
+        const response = await fetch(`/api/tickets/logs?${params.toString()}`);
+        if (!response.ok) throw new Error('Erreur lors du chargement des logs');
+        
+        const data = await response.json();
+        currentLogsPage = page;
+        
+        // Afficher les logs
+        const tbody = document.querySelector('#tickets-logs-table tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (data.logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Aucun log d\'annulation trouvé</td></tr>';
+        } else {
+            data.logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${log.ticketNumber}</strong></td>
+                    <td>${log.email}</td>
+                    <td>${new Date(log.originalPurchaseDate).toLocaleDateString('fr-FR')}</td>
+                    <td>${log.totalAmount.toFixed(2)}$</td>
+                    <td>${log.cancelledBy ? log.cancelledBy.username : 'N/A'}</td>
+                    <td>${new Date(log.cancelledAt).toLocaleString('fr-FR')}</td>
+                    <td>${log.reason || 'Aucune raison spécifiée'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Afficher la pagination
+        displayTicketLogsPagination(data.totalPages, page);
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement des logs');
+    }
+}
+
+// Afficher la pagination des logs
+function displayTicketLogsPagination(totalPages, currentPage) {
+    const paginationDiv = document.getElementById('tickets-logs-pagination');
+    if (!paginationDiv) return;
+    
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="pagination-controls">';
+    
+    if (currentPage > 1) {
+        html += `<button onclick="loadTicketLogs(${currentPage - 1})" class="page-btn">
+            <i class="fas fa-chevron-left"></i> Précédent
+        </button>`;
+    }
+    
+    html += `<span>Page ${currentPage} sur ${totalPages}</span>`;
+    
+    if (currentPage < totalPages) {
+        html += `<button onclick="loadTicketLogs(${currentPage + 1})" class="page-btn">
+            Suivant <i class="fas fa-chevron-right"></i>
+        </button>`;
+    }
+    
+    html += '</div>';
+    paginationDiv.innerHTML = html;
+}
+
+// ============================================
+// FONCTIONS POUR LA CONFIGURATION DES TICKETS
+// ============================================
+
+let quantityOffersCount = 0;
+
+// Charger la configuration des tickets
+async function loadTicketConfig() {
+    try {
+        const response = await fetch('/api/tickets/config/admin');
+        if (!response.ok) throw new Error('Erreur lors du chargement');
+        
+        const config = await response.json();
+        
+        // Remplir le formulaire
+        document.getElementById('ticket-base-price').value = config.basePrice || 0.50;
+        
+        // Afficher les offres
+        const offersList = document.getElementById('quantity-offers-list');
+        offersList.innerHTML = '';
+        quantityOffersCount = 0;
+        
+        if (config.quantityOffers && config.quantityOffers.length > 0) {
+            config.quantityOffers.forEach(offer => {
+                addQuantityOffer(offer.quantity, offer.price);
+            });
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement de la configuration');
+    }
+}
+
+// Ajouter une offre de quantité
+function addQuantityOffer(quantity = '', price = '') {
+    const offersList = document.getElementById('quantity-offers-list');
+    const offerId = quantityOffersCount++;
+    
+    const offerDiv = document.createElement('div');
+    offerDiv.className = 'quantity-offer-item';
+    offerDiv.id = `offer-${offerId}`;
+    offerDiv.innerHTML = `
+        <div class="offer-inputs">
+            <div class="offer-input-group">
+                <label>Quantité minimale</label>
+                <input type="number" class="offer-quantity" value="${quantity}" min="1" required placeholder="Ex: 3">
+            </div>
+            <div class="offer-input-group">
+                <label>Prix total</label>
+                <input type="number" class="offer-price" value="${price}" step="0.01" min="0" required placeholder="Ex: 10.00">
+            </div>
+            <button type="button" class="btn-remove-offer" onclick="removeQuantityOffer(${offerId})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    offersList.appendChild(offerDiv);
+}
+
+// Supprimer une offre
+function removeQuantityOffer(offerId) {
+    const offerDiv = document.getElementById(`offer-${offerId}`);
+    if (offerDiv) {
+        offerDiv.remove();
+    }
+}
+
+// Sauvegarder la configuration
+document.addEventListener('DOMContentLoaded', () => {
+    const configForm = document.getElementById('ticket-config-form');
+    if (configForm) {
+        configForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const basePrice = parseFloat(document.getElementById('ticket-base-price').value);
+            const offerItems = document.querySelectorAll('.quantity-offer-item');
+            
+            const quantityOffers = [];
+            offerItems.forEach(item => {
+                const quantity = parseInt(item.querySelector('.offer-quantity').value);
+                const price = parseFloat(item.querySelector('.offer-price').value);
+                
+                if (quantity && price >= 0) {
+                    quantityOffers.push({ quantity, price });
+                }
+            });
+            
+            try {
+                const response = await fetch('/api/tickets/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        basePrice,
+                        quantityOffers
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Configuration sauvegardée avec succès !');
+                    loadTicketConfig(); // Recharger pour afficher les données sauvegardées
+                } else {
+                    alert(data.message || 'Erreur lors de la sauvegarde');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la sauvegarde de la configuration');
+            }
+        });
+    }
+});
+
+// ============================================
+// FONCTIONS POUR LA CONFIGURATION SMTP
+// ============================================
+
+// Charger la configuration SMTP
+async function loadSMTPConfig() {
+    try {
+        const response = await fetch('/api/smtp/config');
+        if (!response.ok) throw new Error('Erreur lors du chargement');
+        
+        const config = await response.json();
+        
+        // Remplir le formulaire
+        document.getElementById('smtp-host').value = config.host || 'smtp.gmail.com';
+        document.getElementById('smtp-port').value = config.port || 587;
+        document.getElementById('smtp-secure').value = config.secure ? 'true' : 'false';
+        document.getElementById('smtp-user').value = config.user || '';
+        document.getElementById('smtp-from').value = config.from || '';
+        document.getElementById('smtp-from-name').value = config.fromName || 'Cantine';
+        
+        // Afficher un message si un mot de passe existe déjà
+        const passwordInfo = document.getElementById('smtp-password-info');
+        if (config.hasPassword && passwordInfo) {
+            passwordInfo.textContent = 'Un mot de passe est déjà configuré. Laissez vide pour le conserver.';
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement de la configuration SMTP');
+    }
+}
+
+// Sauvegarder la configuration SMTP
+document.addEventListener('DOMContentLoaded', () => {
+    const smtpForm = document.getElementById('smtp-config-form');
+    if (smtpForm) {
+        smtpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const host = document.getElementById('smtp-host').value.trim();
+            const port = parseInt(document.getElementById('smtp-port').value);
+            const secure = document.getElementById('smtp-secure').value === 'true';
+            const user = document.getElementById('smtp-user').value.trim();
+            const password = document.getElementById('smtp-password').value;
+            const from = document.getElementById('smtp-from').value.trim();
+            const fromName = document.getElementById('smtp-from-name').value.trim();
+            
+            try {
+                const response = await fetch('/api/smtp/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host,
+                        port,
+                        secure,
+                        user,
+                        password: password || undefined, // Ne pas envoyer si vide
+                        from,
+                        fromName: fromName || 'Cantine'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Configuration SMTP sauvegardée avec succès !\n' + data.message);
+                    loadSMTPConfig(); // Recharger pour afficher les données sauvegardées
+                } else {
+                    alert(data.message || 'Erreur lors de la sauvegarde');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la sauvegarde de la configuration SMTP');
+            }
+        });
+    }
+});
+
+// Tester la configuration SMTP (fonction globale)
+window.testSMTPConfig = function() {
+    const testSection = document.getElementById('smtp-test-section');
+    if (testSection) {
+        testSection.style.display = testSection.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// Envoyer un email de test (fonction globale)
+window.sendTestEmail = async function() {
+    const testEmail = document.getElementById('test-email').value.trim();
+    const testResult = document.getElementById('smtp-test-result');
+    
+    if (!testEmail || !testEmail.includes('@')) {
+        testResult.className = 'test-result error';
+        testResult.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Veuillez entrer une adresse email valide';
+        return;
+    }
+    
+    testResult.className = 'test-result';
+    testResult.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    
+    try {
+        const response = await fetch('/api/smtp/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ testEmail })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            testResult.className = 'test-result success';
+            testResult.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
+        } else {
+            testResult.className = 'test-result error';
+            testResult.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.message || 'Erreur lors de l\'envoi'}`;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        testResult.className = 'test-result error';
+        testResult.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erreur lors de l\'envoi de l\'email de test';
+    }
+}

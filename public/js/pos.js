@@ -2,6 +2,7 @@ let cart = [];
 let products = [];
 let currentCoupon = null;
 let subtotal = 0;
+let ticketConfig = { basePrice: 0.50, quantityOffers: [] }; // Configuration des tickets
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,12 +12,218 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([
         setupCategories(),
         loadProducts(),
-        loadAvailableCoupons()
+        loadAvailableCoupons(),
+        loadTicketConfig()
     ]);
     setupEventListeners();
 });
 
-// Vérifier l'authentification
+// Charger la configuration des tickets
+async function loadTicketConfig() {
+    try {
+        const response = await fetch('/api/tickets/config');
+        if (response.ok) {
+            ticketConfig = await response.json();
+            console.log('Configuration des tickets chargée:', ticketConfig);
+            // Afficher les offres disponibles dans le modal
+            displayAvailableOffers();
+        } else {
+            console.error('Erreur lors du chargement de la configuration:', response.status);
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement de la configuration des tickets:', error);
+    }
+}
+
+// Afficher les offres disponibles comme boutons sélectionnables
+function displayAvailableOffers() {
+    const offersSelection = document.getElementById('offers-selection');
+    if (!offersSelection) {
+        console.warn('Element offers-selection non trouvé');
+        return;
+    }
+    
+    console.log('Affichage des offres disponibles');
+    offersSelection.innerHTML = '';
+    
+    // Si aucune offre n'est configurée, utiliser le prix de base
+    if (!ticketConfig.quantityOffers || ticketConfig.quantityOffers.length === 0) {
+        console.log('Aucune offre configurée, utilisation du prix de base');
+        const basePrice = ticketConfig.basePrice || 0.50;
+        const baseOffer = document.createElement('button');
+        baseOffer.type = 'button';
+        baseOffer.className = 'offer-button';
+        baseOffer.dataset.quantity = '1';
+        baseOffer.dataset.price = basePrice;
+        baseOffer.innerHTML = `
+            <div class="offer-button-content">
+                <div class="offer-quantity">1 billet</div>
+                <div class="offer-price">${basePrice.toFixed(2)}$</div>
+            </div>
+        `;
+        baseOffer.onclick = () => {
+            console.log('Clic sur offre de base:', { quantity: 1, price: basePrice });
+            selectOffer(1, basePrice, baseOffer);
+        };
+        offersSelection.appendChild(baseOffer);
+        return;
+    }
+    
+    // Trier les offres par quantité croissante
+    const sortedOffers = [...ticketConfig.quantityOffers].sort((a, b) => a.quantity - b.quantity);
+    console.log('Offres triées:', sortedOffers);
+    
+    sortedOffers.forEach(offer => {
+        const offerButton = document.createElement('button');
+        offerButton.type = 'button';
+        offerButton.className = 'offer-button';
+        offerButton.dataset.quantity = offer.quantity;
+        offerButton.dataset.price = offer.price;
+        offerButton.innerHTML = `
+            <div class="offer-button-content">
+                <div class="offer-quantity">${offer.quantity} billet(s)</div>
+                <div class="offer-price">${offer.price.toFixed(2)}$</div>
+                ${offer.quantity > 1 && ticketConfig.basePrice ? `<div class="offer-savings">${((ticketConfig.basePrice * offer.quantity - offer.price) / (ticketConfig.basePrice * offer.quantity) * 100).toFixed(0)}% d'économie</div>` : ''}
+            </div>
+        `;
+        offerButton.onclick = () => {
+            console.log('Clic sur offre:', { quantity: offer.quantity, price: offer.price });
+            selectOffer(offer.quantity, offer.price, offerButton);
+        };
+        offersSelection.appendChild(offerButton);
+    });
+}
+
+// Sélectionner une offre
+function selectOffer(quantity, price, buttonElement) {
+    console.log('Sélection d\'une offre:', { quantity, price });
+    
+    // Retirer la sélection de tous les boutons
+    document.querySelectorAll('.offer-button').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // Sélectionner le bouton cliqué
+    buttonElement.classList.add('selected');
+    
+    // Mettre à jour les champs cachés
+    const quantityInput = document.getElementById('ticket-quantity');
+    const priceInput = document.getElementById('ticket-price');
+    
+    if (!quantityInput || !priceInput) {
+        console.error('Champs cachés non trouvés');
+        return;
+    }
+    
+    quantityInput.value = quantity;
+    priceInput.value = price;
+    
+    console.log('Champs mis à jour:', { quantity: quantityInput.value, price: priceInput.value });
+    
+    // Mettre à jour l'affichage du total
+    const totalDisplay = document.getElementById('ticket-total');
+    if (totalDisplay) {
+        totalDisplay.textContent = price.toFixed(2) + '$';
+    }
+    
+    // Activer le bouton "Ajouter au panier"
+    const addButton = document.getElementById('add-tickets-btn');
+    if (addButton) {
+        addButton.disabled = false;
+        console.log('Bouton "Ajouter au panier" activé');
+    } else {
+        console.warn('Bouton "Ajouter au panier" non trouvé');
+    }
+    
+    // Afficher l'info de l'offre
+    const offerInfo = document.getElementById('ticket-offer-info');
+    if (quantity > 1 && ticketConfig.basePrice) {
+        const savings = ((ticketConfig.basePrice * quantity - price) / (ticketConfig.basePrice * quantity) * 100).toFixed(0);
+        if (offerInfo) {
+            offerInfo.style.display = 'block';
+            offerInfo.className = 'ticket-offer-info success';
+            offerInfo.innerHTML = `
+                <i class="fas fa-tag"></i>
+                <strong>Offre sélectionnée:</strong> ${quantity} billet(s) pour ${price.toFixed(2)}$ (${savings}% d'économie)
+            `;
+        }
+    } else {
+        if (offerInfo) {
+            offerInfo.style.display = 'none';
+        }
+    }
+}
+
+// Calculer le prix d'un ticket en fonction de la quantité (fonction non utilisée maintenant, mais gardée pour compatibilité)
+function calculateTicketPrice(quantity) {
+    if (!ticketConfig.quantityOffers || ticketConfig.quantityOffers.length === 0) {
+        return quantity * (ticketConfig.basePrice || 0.50);
+    }
+    
+    // Chercher une offre exacte correspondant à la quantité
+    const exactOffer = ticketConfig.quantityOffers.find(o => o.quantity === quantity);
+    if (exactOffer) {
+        return exactOffer.price;
+    }
+    
+    // Si quantité = 1 et aucune offre pour 1, utiliser le prix de base
+    if (quantity === 1) {
+        return ticketConfig.basePrice || 0.50;
+    }
+    
+    // Si aucune offre exacte, utiliser le prix de base
+    return quantity * (ticketConfig.basePrice || 0.50);
+}
+
+// Vérifier l'authentification et masquer/afficher le lien admin
+let currentUser = null;
+
+// Fonction globale pour gérer la déconnexion (accessible depuis onclick)
+window.handleLogout = async function(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    console.log('handleLogout appelé');
+    
+    if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        console.log('Confirmation acceptée, déconnexion en cours...');
+        try {
+            const response = await fetch('/auth/logout', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+            
+            console.log('Réponse de déconnexion:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Données de réponse:', data);
+                if (data.success) {
+                    console.log('Déconnexion réussie, redirection...');
+                    window.location.href = '/login?returnTo=/';
+                } else {
+                    console.log('Déconnexion échouée, redirection forcée...');
+                    window.location.href = '/login?returnTo=/';
+                }
+            } else {
+                console.log('Erreur HTTP, redirection forcée...');
+                window.location.href = '/login?returnTo=/';
+            }
+        } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+            window.location.href = '/login?returnTo=/';
+        }
+    } else {
+        console.log('Déconnexion annulée par l\'utilisateur');
+    }
+};
+
 async function checkAuth() {
     try {
         const response = await fetch('/api/check-auth');
@@ -24,6 +231,19 @@ async function checkAuth() {
             // Rediriger vers la page de login avec returnTo
             window.location.href = `/login?returnTo=${encodeURIComponent('/')}`;
             return;
+        }
+        
+        const data = await response.json();
+        currentUser = data.user;
+        
+        // Masquer le lien admin si l'utilisateur n'est pas admin
+        const adminLink = document.querySelector('.admin-link');
+        if (adminLink) {
+            if (currentUser && currentUser.role === 'admin') {
+                adminLink.style.display = 'flex';
+            } else {
+                adminLink.style.display = 'none';
+            }
         }
     } catch (error) {
         console.error('Erreur de vérification d\'authentification:', error);
@@ -191,7 +411,7 @@ function addToCart(productId) {
     const product = products.find(p => p._id === productId);
     if (!product) return;
 
-    const existingItem = cart.find(item => item.product._id === productId);
+    const existingItem = cart.find(item => item.product && item.product._id === productId);
     if (existingItem) {
         existingItem.quantity++;
         // Recalculer le prix unitaire en fonction de la nouvelle quantité
@@ -208,11 +428,40 @@ function addToCart(productId) {
     updateCart();
 }
 
+// Ajouter des coupons au panier
+function addTicketsToCart(email, quantity, price) {
+    console.log('Ajout de tickets au panier:', { email, quantity, price });
+    
+    const ticketItem = {
+        isTicket: true,
+        ticketEmail: email,
+        ticketQuantity: quantity,
+        product: null, // Pas de produit pour les tickets
+        quantity: 1, // 1 item dans le panier (mais représente X coupons)
+        price: price, // Utiliser le prix de l'offre sélectionnée
+        cost: 0, // Pas de coût pour les tickets
+        name: `${quantity} coupon(s) - ${email}`
+    };
+    
+    console.log('Item à ajouter:', ticketItem);
+    cart.push(ticketItem);
+    console.log('Panier après ajout:', cart);
+    
+    updateCart();
+    closeTicketSaleModal();
+}
+
 // Mettre à jour la fonction de mise à jour de la quantité
 function updateQuantity(index, newQuantity) {
     if (newQuantity < 1) return;
     
     const item = cart[index];
+    
+    // Ne pas permettre de modifier la quantité des tickets
+    if (item.isTicket) {
+        return;
+    }
+    
     item.quantity = newQuantity;
     // Recalculer le prix unitaire
     item.price = calculatePrice(item.product, newQuantity);
@@ -223,45 +472,88 @@ function updateQuantity(index, newQuantity) {
 // Mettre à jour la fonction d'affichage du panier
 function updateCart() {
     const cartItems = document.getElementById('cart-items');
+    if (!cartItems) {
+        console.error('Element cart-items non trouvé');
+        return;
+    }
+    
     cartItems.innerHTML = '';
     
     let subtotal = 0; // Initialiser le sous-total
     let total = 0;
     
+    console.log('Mise à jour du panier, nombre d\'items:', cart.length);
+    
     cart.forEach((item, index) => {
-        const itemSubtotal = item.price * item.quantity;
+        console.log('Traitement item', index, ':', item);
+        
+        // Pour les tickets, le prix est déjà le total
+        // Pour les produits, multiplier par la quantité
+        const itemSubtotal = item.isTicket ? item.price : (item.price * item.quantity);
         subtotal += itemSubtotal;
         total += itemSubtotal;
 
-        const itemElement = document.createElement('div');
-        itemElement.className = 'cart-item';
-        itemElement.innerHTML = `
-            <div class="mini-image">
-                <img src="${item.product.image || '/images/default-product.png'}" alt="">
-            </div>
-            <div class="cart-item-details">
-                <span class="item-name">${item.product.name}</span>
-                <div class="price-line">
-                    <span class="item-price">${item.price.toFixed(2)}$</span>
-                    <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
+        // Gérer les tickets différemment
+        if (item.isTicket) {
+            console.log('Affichage d\'un ticket:', item);
+            const itemElement = document.createElement('div');
+            itemElement.className = 'cart-item ticket-item';
+            
+            // Vérifier que les propriétés existent
+            const ticketQuantity = item.ticketQuantity || 1;
+            const ticketEmail = item.ticketEmail || 'Email non défini';
+            const ticketPrice = item.price || 0;
+            
+            itemElement.innerHTML = `
+                <div class="mini-image">
+                    <i class="fas fa-ticket-alt" style="font-size: 2rem; color: var(--primary-color);"></i>
                 </div>
-                <div class="quantity-controls">
-                    <button onclick="updateQuantity(${index}, ${item.quantity - 1})">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <span>${item.quantity}</span>
-                    <button onclick="updateQuantity(${index}, ${item.quantity + 1})">
-                        <i class="fas fa-plus"></i>
+                <div class="cart-item-details">
+                    <span class="item-name">${ticketQuantity} coupon(s)</span>
+                    <div class="item-email" style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">${ticketEmail}</div>
+                    <div class="price-line">
+                        <span class="item-price">${ticketPrice.toFixed(2)}$</span>
+                        <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
+                    </div>
+                </div>
+                <div class="cart-item-actions">
+                    <button class="remove-item" onclick="removeFromCart(${index})">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
-            </div>
-            <div class="cart-item-actions">
-                <button class="remove-item" onclick="removeFromCart(${index})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        cartItems.appendChild(itemElement);
+            `;
+            cartItems.appendChild(itemElement);
+        } else {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'cart-item';
+            itemElement.innerHTML = `
+                <div class="mini-image">
+                    <img src="${item.product.image || '/images/default-product.png'}" alt="">
+                </div>
+                <div class="cart-item-details">
+                    <span class="item-name">${item.product.name}</span>
+                    <div class="price-line">
+                        <span class="item-price">${item.price.toFixed(2)}$</span>
+                        <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
+                    </div>
+                    <div class="quantity-controls">
+                        <button onclick="updateQuantity(${index}, ${item.quantity - 1})">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateQuantity(${index}, ${item.quantity + 1})">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="cart-item-actions">
+                    <button class="remove-item" onclick="removeFromCart(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            cartItems.appendChild(itemElement);
+        }
     });
 
     // Mettre à jour le sous-total et le total
@@ -282,10 +574,25 @@ function removeFromCart(index) {
 
 // Gestion des paiements
 function setupEventListeners() {
-    document.getElementById('clear-cart').onclick = clearCart;
-    document.getElementById('amount-received').oninput = calculateChange;
-    document.getElementById('complete-sale').onclick = completeSale;
-    document.getElementById('apply-coupon').onclick = async () => {
+    const clearCartBtn = document.getElementById('clear-cart');
+    const amountReceivedInput = document.getElementById('amount-received');
+    const completeSaleBtn = document.getElementById('complete-sale');
+    const applyCouponBtn = document.getElementById('apply-coupon');
+    
+    if (clearCartBtn) {
+        clearCartBtn.onclick = clearCart;
+    }
+    
+    if (amountReceivedInput) {
+        amountReceivedInput.oninput = calculateChange;
+    }
+    
+    if (completeSaleBtn) {
+        completeSaleBtn.onclick = completeSale;
+    }
+    
+    if (applyCouponBtn) {
+        applyCouponBtn.onclick = async () => {
         const code = document.getElementById('coupon-code').value.trim();
         const couponInfo = document.getElementById('coupon-info');
         
@@ -316,25 +623,176 @@ function setupEventListeners() {
             couponInfo.textContent = error.message || 'Coupon invalide';
             updateCart();
         }
-    };
+        };
+    }
 
     // Gestionnaire de déconnexion
     const logoutBtn = document.getElementById('logout-btn');
+    console.log('Bouton de déconnexion trouvé:', logoutBtn);
+    
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
+        console.log('Attachement de l\'événement de déconnexion');
+        logoutBtn.onclick = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Clic sur le bouton de déconnexion détecté');
+            
             if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                console.log('Confirmation acceptée, déconnexion en cours...');
                 try {
-                    const response = await fetch('/auth/logout');
-                    if (response.ok || response.redirected) {
+                    const response = await fetch('/auth/logout', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    console.log('Réponse de déconnexion:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Données de réponse:', data);
+                        if (data.success) {
+                            console.log('Déconnexion réussie, redirection...');
+                            window.location.href = '/login?returnTo=/';
+                        } else {
+                            console.log('Déconnexion échouée, redirection forcée...');
+                            window.location.href = '/login?returnTo=/';
+                        }
+                    } else {
+                        console.log('Erreur HTTP, redirection forcée...');
                         window.location.href = '/login?returnTo=/';
                     }
                 } catch (error) {
                     console.error('Erreur lors de la déconnexion:', error);
-                    // Forcer la redirection même en cas d'erreur
                     window.location.href = '/login?returnTo=/';
                 }
+            } else {
+                console.log('Déconnexion annulée par l\'utilisateur');
+            }
+        };
+    } else {
+        console.error('ERREUR: Bouton de déconnexion non trouvé dans le DOM');
+    }
+    
+    // Masquer le lien admin si l'utilisateur n'est pas admin (double vérification)
+    const adminLink = document.querySelector('.admin-link');
+    if (adminLink && currentUser && currentUser.role !== 'admin') {
+        adminLink.style.display = 'none';
+    }
+    
+    // Gérer le modal de vente de tickets
+    setupTicketSaleModal();
+}
+
+// ============================================
+// FONCTIONS POUR LA VENTE DE TICKETS
+// ============================================
+
+function setupTicketSaleModal() {
+    const modal = document.getElementById('ticket-sale-modal');
+    const form = document.getElementById('ticket-sale-form');
+    const closeBtn = modal?.querySelector('.close');
+    
+    // Gérer la soumission du formulaire
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const emailInput = document.getElementById('ticket-email');
+            const quantityInput = document.getElementById('ticket-quantity');
+            const priceInput = document.getElementById('ticket-price');
+            
+            if (!emailInput || !quantityInput || !priceInput) {
+                console.error('Champs du formulaire non trouvés');
+                alert('Erreur: champs du formulaire non trouvés');
+                return;
+            }
+            
+            const email = emailInput.value.trim();
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(priceInput.value);
+            
+            console.log('Valeurs du formulaire:', { email, quantity, price });
+            
+            if (!email || !email.includes('@')) {
+                alert('Veuillez entrer une adresse email valide');
+                return;
+            }
+            
+            if (!quantity || quantity < 1 || isNaN(quantity)) {
+                alert('Veuillez sélectionner une offre');
+                return;
+            }
+            
+            if (!price || price <= 0 || isNaN(price)) {
+                alert('Prix invalide. Veuillez sélectionner une offre.');
+                return;
+            }
+            
+            // Ajouter au panier avec le prix de l'offre
+            console.log('Soumission du formulaire:', { email, quantity, price });
+            addTicketsToCart(email, quantity, price);
+        });
+    }
+    
+    // Fermer le modal avec le bouton X
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeTicketSaleModal);
+    }
+    
+    // Fermer le modal en cliquant en dehors
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeTicketSaleModal();
             }
         });
+    }
+}
+
+function openTicketSaleModal() {
+    const modal = document.getElementById('ticket-sale-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Réinitialiser le formulaire
+        const form = document.getElementById('ticket-sale-form');
+        if (form) {
+            form.reset();
+            const quantityInput = document.getElementById('ticket-quantity');
+            const priceInput = document.getElementById('ticket-price');
+            const totalDisplay = document.getElementById('ticket-total');
+            const offerInfo = document.getElementById('ticket-offer-info');
+            
+            if (quantityInput) quantityInput.value = '';
+            if (priceInput) priceInput.value = '';
+            if (totalDisplay) totalDisplay.textContent = '0.00$';
+            if (offerInfo) offerInfo.style.display = 'none';
+            
+            // Désactiver le bouton "Ajouter au panier"
+            const addButton = document.getElementById('add-tickets-btn');
+            if (addButton) {
+                addButton.disabled = true;
+            }
+            
+            // Désélectionner tous les boutons
+            document.querySelectorAll('.offer-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // S'assurer que les offres sont affichées
+            displayAvailableOffers();
+        }
+    }
+}
+
+function closeTicketSaleModal() {
+    const modal = document.getElementById('ticket-sale-modal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
@@ -377,45 +835,78 @@ async function completeSale() {
             return;
         }
 
-        // Préparer les items avec tous les champs requis
-        const items = cart.map(item => ({
-            product: item.product._id,
-            quantity: item.quantity,
-            price: item.product.price, // Prix original du produit
-            cost: item.product.costPrice, // Prix coûtant du produit
-            discount: item.discount || 0,
-            finalPrice: item.price // Prix après réduction
-        }));
+        // Séparer les produits normaux des tickets
+        const productItems = cart.filter(item => !item.isTicket);
+        const ticketItems = cart.filter(item => item.isTicket);
 
-        // Calculer le profit total
-        const profit = items.reduce((sum, item) => {
-            const revenue = item.finalPrice * item.quantity;
-            const cost = item.cost * item.quantity;
-            return sum + (revenue - cost);
-        }, 0);
+        // Traiter les ventes de produits normaux
+        if (productItems.length > 0) {
+            const items = productItems.map(item => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.price,
+                cost: item.product.costPrice,
+                discount: item.discount || 0,
+                finalPrice: item.price
+            }));
 
-        const saleData = {
-            items: items,
-            total: total,
-            originalTotal: subtotal,
-            discount: subtotal - total,
-            profit: profit,
-            paymentMethod: 'cash',
-            amountReceived: amountReceived,
-            coupon: currentCoupon ? currentCoupon._id : null
-        };
+            const profit = items.reduce((sum, item) => {
+                const revenue = item.finalPrice * item.quantity;
+                const cost = item.cost * item.quantity;
+                return sum + (revenue - cost);
+            }, 0);
 
-        const response = await fetch('/api/sales', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(saleData)
-        });
+            const productTotal = productItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erreur lors de la vente');
+            const saleData = {
+                items: items,
+                total: productTotal,
+                originalTotal: productTotal,
+                discount: 0,
+                profit: profit,
+                paymentMethod: 'cash',
+                amountReceived: amountReceived,
+                coupon: currentCoupon ? currentCoupon._id : null
+            };
+
+            const response = await fetch('/api/sales', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(saleData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors de la vente');
+            }
+        }
+
+        // Traiter les ventes de tickets
+        for (const ticketItem of ticketItems) {
+            try {
+                const response = await fetch('/api/tickets/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: ticketItem.ticketEmail,
+                        quantity: ticketItem.ticketQuantity,
+                        totalAmount: ticketItem.price,
+                        paymentMethod: 'cash'
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de la vente de tickets:', errorData);
+                    // Continuer même en cas d'erreur pour les autres tickets
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vente de tickets:', error);
+            }
         }
 
         // Si la vente est réussie
@@ -423,7 +914,7 @@ async function completeSale() {
         
         // Créer et afficher la notification stylisée
         const notification = document.createElement('div');
-        notification.innerHTML = `
+        let notificationContent = `
             <div class="sale-notification-overlay"></div>
             <div class="sale-notification">
                 <div class="sale-notification-header">
@@ -433,10 +924,31 @@ async function completeSale() {
                 <div class="sale-notification-content">
                     <p>Monnaie à rendre:</p>
                     <div class="sale-notification-amount">${change.toFixed(2)}$</div>
+        `;
+        
+        // Ajouter les informations sur les tickets si présents
+        if (ticketItems.length > 0) {
+            notificationContent += `
+                    <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-weight: 600; margin-top: 15px;">Coupons vendus:</p>
+            `;
+            ticketItems.forEach(ticket => {
+                notificationContent += `
+                    <p style="font-size: 0.9rem; margin: 5px 0;">
+                        ${ticket.ticketQuantity} coupon(s) - ${ticket.ticketEmail}<br>
+                        <small style="color: #666;">Les numéros ont été envoyés par email</small>
+                    </p>
+                `;
+            });
+        }
+        
+        notificationContent += `
                 </div>
                 <button class="sale-notification-button">OK</button>
             </div>
         `;
+        
+        notification.innerHTML = notificationContent;
         document.body.appendChild(notification);
 
         // Gérer la fermeture de la notification

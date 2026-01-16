@@ -46,7 +46,7 @@ app.use((req, res, next) => {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     
     // Protection contre le clickjacking
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self';");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net;");
     
     // Strict Transport Security (HTTPS uniquement en production)
     if (process.env.NODE_ENV === 'production') {
@@ -75,34 +75,67 @@ app.use(cookieParser());
 
 // Middleware pour les routes publiques de l'API
 const publicApiMiddleware = (req, res, next) => {
-    // Routes publiques pour le POS
+    // Routes publiques pour le POS (pas besoin d'authentification)
     const publicPaths = [
         '/products',
         '/categories',
         '/sales',
         '/coupons/available',
-        '/coupons/verify'
+        '/coupons/verify',
+        '/tickets/purchase',
+        '/tickets/config' // Route publique pour la configuration des tickets (accessible à tous)
     ];
-
-    console.log('Route demandée:', req.path); // Log pour déboguer
 
     // Enlever le préfixe '/api' de la route pour la comparaison
     const path = req.path.replace('/api', '');
-    console.log('Route sans préfixe:', path); // Log pour déboguer
 
     // Vérifier si la route est publique
     const isPublic = publicPaths.some(route => path.startsWith(route));
-    
-    console.log('Est une route publique:', isPublic); // Log pour déboguer
 
     if (isPublic) {
-        console.log('Accès autorisé à la route publique'); // Log pour déboguer
         return next();
     }
 
-    console.log('Route protégée - vérification auth'); // Log pour déboguer
     // Si ce n'est pas une route publique, vérifier l'authentification
-    authMiddleware(req, res, next);
+    // Créer un middleware personnalisé qui ne redirige pas pour les API
+    const apiAuthMiddleware = async (req, res, next) => {
+        try {
+            const token = req.cookies.token;
+            if (!token) {
+                return res.status(401).json({ message: 'Non authentifié' });
+            }
+
+            const jwt = require('jsonwebtoken');
+            const User = require('./models/User');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.userId);
+            
+            if (!user || !user.active) {
+                res.clearCookie('token');
+                return res.status(401).json({ message: 'Utilisateur invalide ou inactif' });
+            }
+
+            req.user = user;
+            next();
+        } catch (error) {
+            res.clearCookie('token');
+            return res.status(401).json({ message: 'Token invalide' });
+        }
+    };
+    
+    apiAuthMiddleware(req, res, () => {
+        // Après authentification, vérifier si l'utilisateur est un vendeur de tickets
+        if (req.user && req.user.role === 'ticket_seller') {
+            // Les vendeurs de tickets peuvent accéder aux routes de tickets
+            const allowedPaths = ['/tickets/purchase', '/tickets/config', '/tickets/seller'];
+            const path = req.path.replace('/api', '');
+            const isAllowed = allowedPaths.some(route => path.startsWith(route));
+            if (!isAllowed) {
+                return res.status(403).json({ message: 'Accès non autorisé pour les vendeurs de tickets' });
+            }
+        }
+        next();
+    });
 };
 
 // Routes
@@ -115,22 +148,51 @@ const { router: authRouter, authMiddleware } = require('./routes/auth');
 app.use('/auth', authRouter);
 
 // Route de login (publique)
-app.get('/login', (req, res) => {
+app.get('/login', async (req, res) => {
     if (req.cookies.token) {
-        // Vérifier si l'utilisateur vient du POS ou de l'admin
+        // Vérifier le rôle de l'utilisateur pour la redirection
+        try {
+            const jwt = require('jsonwebtoken');
+            const User = require('./models/User');
+            const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.userId);
+            if (user && user.active) {
+                if (user.role === 'ticket_seller') {
+                    return res.redirect('/tickets-seller');
+                } else if (user.role === 'admin') {
+                    return res.redirect('/admin');
+                } else {
+                    return res.redirect('/');
+                }
+            }
+        } catch (error) {
+            // Token invalide, continuer vers la page de login
+        }
         const returnTo = req.query.returnTo || '/admin';
         return res.redirect(returnTo);
     }
     res.render('login', { returnTo: req.query.returnTo || '/admin' });
 });
 
-// Protéger la route POS avec authentification
-app.use('/', authMiddleware, indexRouter);
+// Route publique pour l'achat de tickets (avant la protection du POS)
+app.get('/tickets', (req, res) => {
+    res.render('tickets', { user: req.user || null });
+});
 
-// Appliquer le middleware API avant la route admin
+// Appliquer le middleware API AVANT les autres routes pour éviter les conflits
 app.use('/api', publicApiMiddleware, apiRouter);
 
-// Protéger les routes admin en dernier
+// Route pour les vendeurs de tickets (interface simplifiée) - AVANT la route '/'
+const { ticketSellerMiddleware, posMiddleware } = require('./routes/auth');
+app.get('/tickets-seller', authMiddleware, ticketSellerMiddleware, (req, res) => {
+    res.render('tickets-seller', { user: req.user });
+});
+
+// Protéger la route POS avec authentification et vérifier le rôle
+app.use('/', authMiddleware, posMiddleware, indexRouter);
+
+// Protéger les routes admin avec authentification ET vérification de rôle admin
+// Le middleware adminMiddleware dans admin.js vérifiera le rôle
 app.use('/admin', authMiddleware, adminRouter);
 
 // Gestion des erreurs 404

@@ -23,6 +23,11 @@ Application web complète pour la gestion d'une cantine avec système de point d
 - **Catégories** : Gestion des catégories de produits
 - **Coupons** : Création et gestion des coupons de réduction
 - **Utilisateurs** : Gestion des comptes utilisateurs avec rôles (admin/user)
+- **Tirage au sort** : Système de vente de coupons avec tirage au sort aléatoire
+  - Vente de coupons (0.50$ par coupon)
+  - Génération de numéros uniques
+  - Envoi automatique des numéros par email
+  - Tirage au sort d'un gagnant parmi tous les coupons vendus
 
 ## 🛠️ Technologies
 
@@ -60,6 +65,14 @@ JWT_SECRET=votre_secret_jwt_ici
 SESSION_SECRET=votre_secret_session_ici
 PORT=3000
 NODE_ENV=development
+
+# Configuration SMTP pour l'envoi d'emails (optionnel)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=votre_email@gmail.com
+SMTP_PASS=votre_mot_de_passe_app
+SMTP_FROM=votre_email@gmail.com
 ```
 
 4. Générer les secrets (optionnel) :

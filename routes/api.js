@@ -6,9 +6,14 @@ const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const Category = require('../models/Category');
 const Coupon = require('../models/Coupon');
-const { authMiddleware } = require('./auth');
+const Ticket = require('../models/Ticket');
+const TicketConfig = require('../models/TicketConfig');
+const TicketLog = require('../models/TicketLog');
+const SMTPConfig = require('../models/SMTPConfig');
+const { authMiddleware, adminMiddleware, ticketSellerMiddleware } = require('./auth');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 
 // Configuration de multer pour le stockage des images
 const storage = multer.diskStorage({
@@ -730,7 +735,14 @@ router.get('/coupons/:id', async (req, res) => {
 
 // Ajouter cette route
 router.get('/check-auth', authMiddleware, (req, res) => {
-    res.json({ authenticated: true });
+    res.json({ 
+        authenticated: true,
+        user: {
+            id: req.user._id,
+            username: req.user.username,
+            role: req.user.role
+        }
+    });
 });
 
 // Obtenir tous les utilisateurs
@@ -845,6 +857,1040 @@ router.delete('/users/:id', async (req, res) => {
         res.json({ message: 'Utilisateur supprimé' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+// ============================================
+// ROUTES D'EXPORT/IMPORT DE DONNÉES
+// ============================================
+
+// Exporter toutes les données (admin seulement)
+router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const {
+            products = 'true',
+            categories = 'true',
+            coupons = 'true',
+            users = 'false',
+            sales = 'false'
+        } = req.query;
+
+        const data = {
+            exportDate: new Date().toISOString(),
+            version: '1.0',
+            exportOptions: {
+                products: products === 'true',
+                categories: categories === 'true',
+                coupons: coupons === 'true',
+                users: users === 'true',
+                sales: sales === 'true'
+            }
+        };
+
+        // Ajouter les données selon les options
+        if (products === 'true') {
+            data.products = await Product.find().lean();
+        }
+        
+        if (categories === 'true') {
+            data.categories = await Category.find().lean();
+        }
+        
+        if (coupons === 'true') {
+            data.coupons = await Coupon.find().lean();
+        }
+        
+        if (users === 'true') {
+            data.users = await User.find().select('-password').lean();
+        }
+        
+        if (sales === 'true') {
+            data.sales = await Sale.find().lean();
+        }
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="cantine-export-${Date.now()}.json"`);
+        res.json(data);
+    } catch (error) {
+        console.error('Erreur lors de l\'export:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'export des données', error: error.message });
+    }
+});
+
+// Importer des données (admin seulement)
+router.post('/import', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { data, options = {} } = req.body;
+        
+        if (!data) {
+            return res.status(400).json({ message: 'Aucune donnée fournie' });
+        }
+
+        const {
+            importProducts = true,
+            importCategories = true,
+            importCoupons = true,
+            importUsers = false,
+            importSales = false,
+            overwrite = false // Si true, remplace les données existantes
+        } = options;
+
+        const results = {
+            products: { imported: 0, errors: [] },
+            categories: { imported: 0, errors: [] },
+            coupons: { imported: 0, errors: [] },
+            users: { imported: 0, errors: [] },
+            sales: { imported: 0, errors: [] }
+        };
+
+        // Importer les catégories en premier (car les produits en dépendent)
+        if (importCategories && data.categories) {
+            for (const categoryData of data.categories) {
+                try {
+                    if (overwrite) {
+                        await Category.findOneAndUpdate(
+                            { name: categoryData.name },
+                            categoryData,
+                            { upsert: true, new: true }
+                        );
+                    } else {
+                        const existing = await Category.findOne({ name: categoryData.name });
+                        if (!existing) {
+                            await Category.create(categoryData);
+                        }
+                    }
+                    results.categories.imported++;
+                } catch (error) {
+                    results.categories.errors.push({ name: categoryData.name, error: error.message });
+                }
+            }
+        }
+
+        // Importer les produits
+        if (importProducts && data.products) {
+            for (const productData of data.products) {
+                try {
+                    // Supprimer _id pour éviter les conflits
+                    delete productData._id;
+                    delete productData.__v;
+                    
+                    if (overwrite) {
+                        await Product.findOneAndUpdate(
+                            { name: productData.name },
+                            productData,
+                            { upsert: true, new: true }
+                        );
+                    } else {
+                        const existing = await Product.findOne({ name: productData.name });
+                        if (!existing) {
+                            await Product.create(productData);
+                        }
+                    }
+                    results.products.imported++;
+                } catch (error) {
+                    results.products.errors.push({ name: productData.name, error: error.message });
+                }
+            }
+        }
+
+        // Importer les coupons
+        if (importCoupons && data.coupons) {
+            for (const couponData of data.coupons) {
+                try {
+                    delete couponData._id;
+                    delete couponData.__v;
+                    
+                    if (overwrite) {
+                        await Coupon.findOneAndUpdate(
+                            { code: couponData.code },
+                            couponData,
+                            { upsert: true, new: true }
+                        );
+                    } else {
+                        const existing = await Coupon.findOne({ code: couponData.code });
+                        if (!existing) {
+                            await Coupon.create(couponData);
+                        }
+                    }
+                    results.coupons.imported++;
+                } catch (error) {
+                    results.coupons.errors.push({ code: couponData.code, error: error.message });
+                }
+            }
+        }
+
+        // Importer les utilisateurs (optionnel et dangereux)
+        if (importUsers && data.users) {
+            for (const userData of data.users) {
+                try {
+                    delete userData._id;
+                    delete userData.__v;
+                    // Ne pas importer les mots de passe pour des raisons de sécurité
+                    delete userData.password;
+                    
+                    if (overwrite) {
+                        await User.findOneAndUpdate(
+                            { username: userData.username },
+                            userData,
+                            { upsert: true, new: true }
+                        );
+                    } else {
+                        const existing = await User.findOne({ username: userData.username });
+                        if (!existing) {
+                            // Créer un utilisateur avec un mot de passe par défaut
+                            const newUser = new User({
+                                ...userData,
+                                password: 'changeme123' // L'utilisateur devra changer le mot de passe
+                            });
+                            await newUser.save();
+                        }
+                    }
+                    results.users.imported++;
+                } catch (error) {
+                    results.users.errors.push({ username: userData.username, error: error.message });
+                }
+            }
+        }
+
+        // Importer les ventes (optionnel)
+        if (importSales && data.sales) {
+            for (const saleData of data.sales) {
+                try {
+                    delete saleData._id;
+                    delete saleData.__v;
+                    await Sale.create(saleData);
+                    results.sales.imported++;
+                } catch (error) {
+                    results.sales.errors.push({ date: saleData.date, error: error.message });
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Import terminé',
+            results
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'import:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'import des données', error: error.message });
+    }
+});
+
+// ============================================
+// ROUTES POUR LA VENTE DE COUPONS (TICKETS)
+// ============================================
+
+// Configuration du transporteur email
+const createEmailTransporter = async () => {
+    // Essayer d'abord d'utiliser la configuration de la base de données
+    try {
+        const smtpConfig = await SMTPConfig.findOne({ active: true });
+        if (smtpConfig) {
+            return nodemailer.createTransport({
+                host: smtpConfig.host,
+                port: smtpConfig.port,
+                secure: smtpConfig.secure,
+                auth: {
+                    user: smtpConfig.user,
+                    pass: smtpConfig.password
+                }
+            });
+        }
+    } catch (error) {
+        console.warn('Erreur lors de la récupération de la configuration SMTP:', error);
+    }
+    
+    // Fallback sur les variables d'environnement
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.warn('Configuration SMTP manquante. Les emails ne seront pas envoyés.');
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+        }
+    });
+};
+
+// Obtenir l'adresse email "from"
+const getEmailFrom = async () => {
+    try {
+        const smtpConfig = await SMTPConfig.findOne({ active: true });
+        if (smtpConfig && smtpConfig.from) {
+            // Si un nom est configuré, l'utiliser
+            if (smtpConfig.fromName) {
+                return `"${smtpConfig.fromName}" <${smtpConfig.from}>`;
+            }
+            return smtpConfig.from;
+        }
+    } catch (error) {
+        console.warn('Erreur lors de la récupération de l\'adresse from:', error);
+    }
+    
+    return process.env.SMTP_FROM || process.env.SMTP_USER;
+};
+
+// Générer un numéro de ticket unique
+async function generateTicketNumber() {
+    let ticketNumber;
+    let exists = true;
+    
+    while (exists) {
+        // Format: TICKET-YYYYMMDD-XXXXXX (6 chiffres aléatoires)
+        const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const random = Math.floor(100000 + Math.random() * 900000);
+        ticketNumber = `TICKET-${date}-${random}`;
+        
+        const existing = await Ticket.findOne({ ticketNumber });
+        exists = !!existing;
+    }
+    
+    return ticketNumber;
+}
+
+// Calculer le prix d'un ticket en fonction de la quantité et des offres
+async function calculateTicketPrice(quantity) {
+    const config = await TicketConfig.findOne({ active: true });
+    
+    if (!config) {
+        // Configuration par défaut si aucune config n'existe
+        return quantity * 0.50;
+    }
+    
+    // Chercher une offre exacte correspondant à la quantité
+    const exactOffer = config.quantityOffers.find(o => o.quantity === quantity);
+    if (exactOffer) {
+        return exactOffer.price;
+    }
+    
+    // Si quantité = 1 et aucune offre pour 1, utiliser le prix de base
+    if (quantity === 1) {
+        return config.basePrice;
+    }
+    
+    // Si aucune offre exacte, utiliser le prix de base
+    return quantity * config.basePrice;
+}
+
+// Obtenir la configuration des tickets (publique pour le calcul côté client)
+router.get('/tickets/config', async (req, res) => {
+    try {
+        const config = await TicketConfig.findOne({ active: true });
+        
+        if (!config) {
+            // Retourner une configuration par défaut
+            return res.json({
+                basePrice: 0.50,
+                quantityOffers: []
+            });
+        }
+        
+        res.json({
+            basePrice: config.basePrice,
+            quantityOffers: config.quantityOffers.sort((a, b) => a.quantity - b.quantity)
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la configuration:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Acheter des coupons (route publique)
+router.post('/tickets/purchase', async (req, res) => {
+    try {
+        const { email, quantity, totalAmount, paymentMethod = 'cash' } = req.body;
+        
+        // Validation
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ message: 'Email invalide' });
+        }
+        
+        if (!quantity || quantity < 1 || quantity > 100) {
+            return res.status(400).json({ message: 'Quantité invalide (1-100)' });
+        }
+        
+        // Vérifier que la quantité correspond à une offre configurée
+        const config = await TicketConfig.findOne({ active: true });
+        
+        if (!config) {
+            // Si aucune config, accepter n'importe quelle quantité avec le prix de base
+            const expectedPrice = quantity * 0.50;
+            if (!totalAmount || Math.abs(totalAmount - expectedPrice) > 0.01) {
+                return res.status(400).json({ 
+                    message: `Montant invalide. Le montant attendu pour ${quantity} billet(s) est ${expectedPrice.toFixed(2)}$` 
+                });
+            }
+        } else {
+            // Vérifier que la quantité correspond à une offre ou au prix de base (quantité = 1)
+            const validQuantities = config.quantityOffers.map(o => o.quantity);
+            const isBasePrice = quantity === 1;
+            const isOfferQuantity = validQuantities.includes(quantity);
+            
+            if (!isBasePrice && !isOfferQuantity) {
+                return res.status(400).json({ 
+                    message: `Quantité invalide. Seules les offres configurées sont disponibles. Quantités disponibles: 1, ${validQuantities.join(', ')}` 
+                });
+            }
+            
+            // Calculer le prix attendu selon la configuration
+            const expectedPrice = await calculateTicketPrice(quantity);
+            
+            // Valider que le montant correspond (avec une petite marge d'erreur pour les arrondis)
+            if (!totalAmount || Math.abs(totalAmount - expectedPrice) > 0.01) {
+                return res.status(400).json({ 
+                    message: `Montant invalide. Le montant attendu pour ${quantity} billet(s) est ${expectedPrice.toFixed(2)}$` 
+                });
+            }
+        }
+        
+        // Générer les numéros de tickets
+        const tickets = [];
+        const ticketNumbers = [];
+        
+        for (let i = 0; i < quantity; i++) {
+            const ticketNumber = await generateTicketNumber();
+            ticketNumbers.push(ticketNumber);
+            
+            const ticket = new Ticket({
+                ticketNumber,
+                email: email.toLowerCase().trim(),
+                quantity: 1,
+                totalAmount: totalAmount / quantity,
+                paymentMethod
+            });
+            
+            tickets.push(ticket);
+        }
+        
+        // Sauvegarder tous les tickets
+        await Ticket.insertMany(tickets);
+        
+        // Envoyer l'email avec les numéros
+        try {
+            const transporter = await createEmailTransporter();
+            const emailFrom = await getEmailFrom();
+            
+            if (transporter) {
+                const mailOptions = {
+                    from: emailFrom,
+                    to: email,
+                    subject: `Vos ${quantity} coupon(s) - Cantine`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #0066cc;">Merci pour votre achat !</h2>
+                            <p>Vous avez acheté <strong>${quantity}</strong> coupon(s) pour un total de <strong>${totalAmount.toFixed(2)}$</strong>.</p>
+                            <p>Voici vos numéros de coupons :</p>
+                            <div style="background: #f8f8f8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                ${ticketNumbers.map(num => `<p style="font-size: 18px; font-weight: bold; color: #0066cc; margin: 10px 0;">${num}</p>`).join('')}
+                            </div>
+                            <p style="color: #666;">Ces numéros vous permettront de participer au tirage au sort. Bonne chance !</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
+                        </div>
+                    `
+                };
+                
+                await transporter.sendMail(mailOptions);
+            } else {
+                console.log('Email non envoyé - Configuration SMTP manquante');
+            }
+        } catch (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+            // Ne pas faire échouer la transaction si l'email échoue
+        }
+        
+        res.json({
+            success: true,
+            message: `${quantity} coupon(s) acheté(s) avec succès`,
+            tickets: ticketNumbers,
+            email: email
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'achat de coupons:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'achat de coupons', error: error.message });
+    }
+});
+
+// Obtenir tous les tickets (admin seulement)
+router.get('/tickets', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { email, isWinner, status, page = 1, limit = 50 } = req.query;
+        
+        const query = {};
+        if (email) query.email = email.toLowerCase();
+        if (isWinner !== undefined) query.isWinner = isWinner === 'true';
+        if (status) query.status = status;
+        
+        const tickets = await Ticket.find(query)
+            .populate('cancelledBy', 'username')
+            .sort('-purchaseDate')
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .lean();
+        
+        const total = await Ticket.countDocuments(query);
+        
+        res.json({
+            tickets,
+            total,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des tickets:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Obtenir les statistiques des tickets (admin seulement)
+router.get('/tickets/stats', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const totalTickets = await Ticket.countDocuments();
+        const totalWinners = await Ticket.countDocuments({ isWinner: true });
+        const totalAmount = await Ticket.aggregate([
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        ]);
+        
+        const ticketsByEmail = await Ticket.aggregate([
+            { $group: { _id: '$email', count: { $sum: 1 }, total: { $sum: '$totalAmount' } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+        
+        res.json({
+            totalTickets,
+            totalWinners,
+            totalAmount: totalAmount[0]?.total || 0,
+            topBuyers: ticketsByEmail
+        });
+    } catch (error) {
+        console.error('Erreur lors du calcul des statistiques:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Annuler un billet (admin seulement)
+router.post('/tickets/:ticketId/cancel', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const { reason } = req.body;
+        
+        // Valider que la raison est fournie
+        if (!reason || reason.trim() === '') {
+            return res.status(400).json({ message: 'La raison de l\'annulation est obligatoire' });
+        }
+        
+        // Trouver le billet
+        const ticket = await Ticket.findById(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ message: 'Billet non trouvé' });
+        }
+        
+        // Vérifier que le billet n'est pas déjà annulé
+        if (ticket.status === 'cancelled') {
+            return res.status(400).json({ message: 'Ce billet est déjà annulé' });
+        }
+        
+        // Vérifier que le billet n'est pas un gagnant
+        if (ticket.isWinner) {
+            return res.status(400).json({ message: 'Impossible d\'annuler un billet gagnant' });
+        }
+        
+        // Créer un log d'annulation
+        const log = new TicketLog({
+            ticketNumber: ticket.ticketNumber,
+            action: 'cancelled',
+            email: ticket.email,
+            quantity: ticket.quantity,
+            totalAmount: ticket.totalAmount,
+            cancelledBy: req.user._id,
+            cancelledAt: new Date(),
+            reason: reason.trim(),
+            originalPurchaseDate: ticket.purchaseDate
+        });
+        await log.save();
+        
+        // Mettre à jour le statut du billet
+        ticket.status = 'cancelled';
+        ticket.cancelledAt = new Date();
+        ticket.cancelledBy = req.user._id;
+        ticket.cancellationReason = reason.trim();
+        await ticket.save();
+        
+        res.json({
+            success: true,
+            message: 'Billet annulé avec succès',
+            ticket: ticket,
+            log: log
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'annulation du billet:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'annulation du billet', error: error.message });
+    }
+});
+
+// Supprimer tous les billets (admin seulement) - Réinitialiser le tirage
+router.delete('/tickets/all', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        // Vérifier la confirmation
+        const { confirm } = req.body;
+        if (confirm !== 'DELETE_ALL_TICKETS') {
+            return res.status(400).json({ message: 'Confirmation requise pour supprimer tous les billets' });
+        }
+        
+        // Supprimer tous les billets
+        const result = await Ticket.deleteMany({});
+        
+        // Supprimer aussi tous les logs (optionnel - vous pouvez commenter cette ligne si vous voulez garder les logs)
+        // await TicketLog.deleteMany({});
+        
+        res.json({
+            success: true,
+            message: `Tous les billets ont été supprimés (${result.deletedCount} billet(s))`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('Erreur lors de la suppression de tous les billets:', error);
+        res.status(500).json({ message: 'Erreur lors de la suppression de tous les billets', error: error.message });
+    }
+});
+
+// Obtenir les logs d'annulation (admin seulement)
+router.get('/tickets/logs', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { page = 1, limit = 50, action } = req.query;
+        
+        const query = {};
+        if (action) query.action = action;
+        
+        const logs = await TicketLog.find(query)
+            .populate('cancelledBy', 'username')
+            .sort('-createdAt')
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .lean();
+        
+        const total = await TicketLog.countDocuments(query);
+        
+        res.json({
+            logs,
+            total,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des logs:', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des logs', error: error.message });
+    }
+});
+
+// Tirer au sort un gagnant (admin seulement)
+router.post('/tickets/draw', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { excludeWinners = true } = req.body;
+        
+        // Construire la requête - exclure les gagnants ET les billets annulés
+        const query = { 
+            isWinner: false,
+            status: { $ne: 'cancelled' } // Exclure les billets annulés
+        };
+        if (excludeWinners) {
+            query.isWinner = false;
+        }
+        
+        // Compter les tickets éligibles
+        const eligibleCount = await Ticket.countDocuments(query);
+        
+        if (eligibleCount === 0) {
+            return res.status(400).json({ message: 'Aucun ticket éligible pour le tirage' });
+        }
+        
+        // Sélectionner un ticket aléatoire
+        const randomIndex = Math.floor(Math.random() * eligibleCount);
+        const winner = await Ticket.findOne(query).skip(randomIndex);
+        
+        if (!winner) {
+            return res.status(404).json({ message: 'Erreur lors de la sélection du gagnant' });
+        }
+        
+        // Marquer comme gagnant
+        winner.isWinner = true;
+        winner.winnerDate = new Date();
+        await winner.save();
+        
+        // Envoyer un email au gagnant
+        try {
+            const transporter = await createEmailTransporter();
+            const emailFrom = await getEmailFrom();
+            
+            if (transporter) {
+                const mailOptions = {
+                    from: emailFrom,
+                    to: winner.email,
+                    subject: '🎉 Félicitations ! Vous avez gagné !',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #16a34a;">🎉 Félicitations !</h2>
+                            <p>Votre numéro de coupon <strong style="color: #0066cc; font-size: 20px;">${winner.ticketNumber}</strong> a été tiré au sort et vous avez gagné !</p>
+                            <p>Nous vous contacterons bientôt pour vous remettre votre prix.</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
+                        </div>
+                    `
+                };
+                
+                await transporter.sendMail(mailOptions);
+            }
+        } catch (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'email au gagnant:', emailError);
+            // Ne pas faire échouer la transaction
+        }
+        
+        res.json({
+            success: true,
+            message: 'Gagnant sélectionné avec succès',
+            winner: {
+                ticketNumber: winner.ticketNumber,
+                email: winner.email,
+                purchaseDate: winner.purchaseDate
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors du tirage au sort:', error);
+        res.status(500).json({ message: 'Erreur lors du tirage au sort', error: error.message });
+    }
+});
+
+// Obtenir les statistiques des tickets pour un vendeur (ticket_seller seulement)
+router.get('/tickets/seller/stats', authMiddleware, ticketSellerMiddleware, async (req, res) => {
+    try {
+        // Statistiques globales
+        const totalTickets = await Ticket.countDocuments();
+        const totalAmount = await Ticket.aggregate([
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        ]);
+        
+        // Statistiques du jour
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayTickets = await Ticket.countDocuments({
+            purchaseDate: { $gte: today, $lt: tomorrow }
+        });
+        
+        const todayAmount = await Ticket.aggregate([
+            { $match: { purchaseDate: { $gte: today, $lt: tomorrow } } },
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        ]);
+        
+        res.json({
+            total: {
+                tickets: totalTickets,
+                amount: totalAmount[0]?.total || 0
+            },
+            today: {
+                tickets: todayTickets,
+                amount: todayAmount[0]?.total || 0
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques de tickets:', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des statistiques', error: error.message });
+    }
+});
+
+// Réinitialiser un gagnant (admin seulement)
+router.put('/tickets/:id/reset-winner', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const ticket = await Ticket.findById(req.params.id);
+        
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket non trouvé' });
+        }
+        
+        ticket.isWinner = false;
+        ticket.winnerDate = null;
+        await ticket.save();
+        
+        res.json({ success: true, message: 'Gagnant réinitialisé' });
+    } catch (error) {
+        console.error('Erreur lors de la réinitialisation:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============================================
+// ROUTES POUR LA CONFIGURATION DES TICKETS (ADMIN)
+// ============================================
+
+// Obtenir la configuration actuelle (admin seulement)
+router.get('/tickets/config/admin', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const config = await TicketConfig.findOne({ active: true });
+        
+        if (!config) {
+            // Créer une configuration par défaut
+            const defaultConfig = new TicketConfig({
+                basePrice: 0.50,
+                quantityOffers: [],
+                active: true
+            });
+            await defaultConfig.save();
+            return res.json(defaultConfig);
+        }
+        
+        res.json(config);
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la configuration:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Mettre à jour la configuration (admin seulement)
+router.put('/tickets/config', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { basePrice, quantityOffers } = req.body;
+        
+        // Validation
+        if (basePrice === undefined || basePrice < 0) {
+            return res.status(400).json({ message: 'Prix de base invalide' });
+        }
+        
+        if (!Array.isArray(quantityOffers)) {
+            return res.status(400).json({ message: 'Les offres doivent être un tableau' });
+        }
+        
+        // Valider les offres
+        for (const offer of quantityOffers) {
+            if (!offer.quantity || offer.quantity < 1) {
+                return res.status(400).json({ message: 'Quantité d\'offre invalide' });
+            }
+            if (offer.price === undefined || offer.price < 0) {
+                return res.status(400).json({ message: 'Prix d\'offre invalide' });
+            }
+        }
+        
+        // Vérifier qu'il n'y a pas de quantités en double
+        const quantities = quantityOffers.map(o => o.quantity);
+        if (new Set(quantities).size !== quantities.length) {
+            return res.status(400).json({ message: 'Les quantités doivent être uniques' });
+        }
+        
+        // Désactiver l'ancienne configuration
+        await TicketConfig.updateMany({ active: true }, { active: false });
+        
+        // Créer la nouvelle configuration
+        const config = new TicketConfig({
+            basePrice,
+            quantityOffers: quantityOffers.map(o => ({
+                quantity: parseInt(o.quantity),
+                price: parseFloat(o.price)
+            })),
+            active: true
+        });
+        
+        await config.save();
+        
+        res.json({
+            success: true,
+            message: 'Configuration mise à jour avec succès',
+            config
+        });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de la configuration:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============================================
+// ROUTES POUR LA CONFIGURATION SMTP (ADMIN)
+// ============================================
+
+// Obtenir la configuration SMTP actuelle (admin seulement)
+router.get('/smtp/config', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const config = await SMTPConfig.findOne({ active: true });
+        
+        if (!config) {
+            // Retourner une configuration vide (sans mot de passe)
+            return res.json({
+                host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                port: parseInt(process.env.SMTP_PORT) || 587,
+                secure: process.env.SMTP_SECURE === 'true' || false,
+                user: process.env.SMTP_USER || '',
+                from: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+                fromName: 'Cantine',
+                hasPassword: !!process.env.SMTP_PASS
+            });
+        }
+        
+        // Ne pas retourner le mot de passe en clair
+        res.json({
+            host: config.host,
+            port: config.port,
+            secure: config.secure,
+            user: config.user,
+            from: config.from,
+            fromName: config.fromName || 'Cantine',
+            hasPassword: !!config.password
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la configuration SMTP:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Mettre à jour la configuration SMTP (admin seulement)
+router.put('/smtp/config', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { host, port, secure, user, password, from, fromName } = req.body;
+        
+        // Validation
+        if (!host || !user || !from) {
+            return res.status(400).json({ message: 'Les champs host, user et from sont requis' });
+        }
+        
+        if (!port || port < 1 || port > 65535) {
+            return res.status(400).json({ message: 'Le port doit être entre 1 et 65535' });
+        }
+        
+        if (!from.includes('@')) {
+            return res.status(400).json({ message: 'L\'adresse email "from" est invalide' });
+        }
+        
+        // Désactiver l'ancienne configuration
+        await SMTPConfig.updateMany({ active: true }, { active: false });
+        
+        // Vérifier si une configuration existe déjà avec le même user
+        const existingConfig = await SMTPConfig.findOne({ user, active: false });
+        
+        let config;
+        if (existingConfig && password) {
+            // Mettre à jour la configuration existante
+            existingConfig.host = host;
+            existingConfig.port = parseInt(port);
+            existingConfig.secure = secure === true || secure === 'true';
+            existingConfig.password = password;
+            existingConfig.from = from;
+            existingConfig.fromName = fromName || 'Cantine';
+            existingConfig.active = true;
+            config = await existingConfig.save();
+        } else {
+            // Créer une nouvelle configuration
+            config = new SMTPConfig({
+                host,
+                port: parseInt(port),
+                secure: secure === true || secure === 'true',
+                user,
+                password: password || '', // Si pas de mot de passe fourni, garder l'ancien
+                from,
+                fromName: fromName || 'Cantine',
+                active: true
+            });
+            
+            // Si pas de mot de passe fourni et qu'une config existe, utiliser l'ancien mot de passe
+            if (!password && existingConfig) {
+                config.password = existingConfig.password;
+            }
+            
+            await config.save();
+        }
+        
+        // Tester la configuration en créant un transporteur
+        try {
+            const testTransporter = nodemailer.createTransport({
+                host: config.host,
+                port: config.port,
+                secure: config.secure,
+                auth: {
+                    user: config.user,
+                    pass: config.password
+                }
+            });
+            
+            await testTransporter.verify();
+            
+            res.json({
+                success: true,
+                message: 'Configuration SMTP sauvegardée et testée avec succès',
+                config: {
+                    host: config.host,
+                    port: config.port,
+                    secure: config.secure,
+                    user: config.user,
+                    from: config.from,
+                    fromName: config.fromName
+                }
+            });
+        } catch (testError) {
+            // La configuration est sauvegardée mais le test a échoué
+            res.status(400).json({
+                success: false,
+                message: 'Configuration sauvegardée mais le test de connexion a échoué. Vérifiez vos paramètres.',
+                error: testError.message
+            });
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de la configuration SMTP:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Tester la configuration SMTP (admin seulement)
+router.post('/smtp/test', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { testEmail } = req.body;
+        
+        if (!testEmail || !testEmail.includes('@')) {
+            return res.status(400).json({ message: 'Adresse email de test invalide' });
+        }
+        
+        const transporter = await createEmailTransporter();
+        const emailFrom = await getEmailFrom();
+        
+        if (!transporter) {
+            return res.status(400).json({ message: 'Configuration SMTP non disponible' });
+        }
+        
+        const mailOptions = {
+            from: emailFrom,
+            to: testEmail,
+            subject: 'Test de configuration SMTP - Cantine',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #0066cc;">Test de configuration SMTP</h2>
+                    <p>Si vous recevez cet email, cela signifie que votre configuration SMTP fonctionne correctement !</p>
+                    <p>Date du test: ${new Date().toLocaleString('fr-FR')}</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
+                </div>
+            `
+        };
+        
+        await transporter.sendMail(mailOptions);
+        
+        res.json({
+            success: true,
+            message: `Email de test envoyé avec succès à ${testEmail}`
+        });
+    } catch (error) {
+        console.error('Erreur lors du test SMTP:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de l\'envoi de l\'email de test',
+            error: error.message
+        });
     }
 });
 

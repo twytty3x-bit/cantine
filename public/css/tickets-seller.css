@@ -1,0 +1,829 @@
+:root {
+    --primary-color: #0066cc;
+    --hover-color: #004d99;
+    --bg-color: #f8f8f8;
+    --border-color: #e0e0e0;
+    --text-color: #333333;
+    --text-light: #666666;
+    --success-color: #16a34a;
+    --danger-color: #dc2626;
+}
+
+.tickets-seller-container {
+    min-height: 100vh;
+    background: var(--bg-color);
+}
+
+.tickets-seller-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-content p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.logout-btn {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.tickets-seller-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.main-action-area {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.sell-ticket-btn {
+    padding: 25px 50px;
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.sell-ticket-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 102, 204, 0.4);
+}
+
+.sell-ticket-btn i {
+    font-size: 1.5rem;
+}
+
+.stats-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stats-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+    border-color: var(--primary-color);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.2;
+}
+
+.stat-subvalue {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* Modal styles (similaires à pos.css) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-content .close:hover {
+    color: var(--text-color);
+}
+
+.modal-content h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.form-group label i {
+    color: var(--primary-color);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.offers-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.offer-button {
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.offer-button:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.2);
+}
+
+.offer-button.selected {
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.offer-button-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.offer-quantity {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.offer-button.selected .offer-quantity {
+    color: white;
+}
+
+.offer-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.offer-button.selected .offer-price {
+    color: white;
+}
+
+.ticket-total-display {
+    background: var(--bg-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+}
+
+.ticket-offer-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ticket-offer-info.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Styles pour les notifications de vente (comme dans le POS) */
+.sale-notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.sale-notification {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 2001;
+    width: 90%;
+    max-width: 400px;
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center;
+    margin: auto;
+}
+
+.sale-notification.error {
+    border-top: 4px solid var(--danger-color);
+}
+
+.sale-notification-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: var(--success-color);
+}
+
+.sale-notification.error .sale-notification-header {
+    color: var(--danger-color);
+}
+
+.sale-notification-header i {
+    font-size: 24px;
+}
+
+.sale-notification-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.sale-notification-content {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.sale-notification-amount {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--success-color);
+    margin: 10px 0;
+}
+
+.sale-notification-button {
+    width: 100%;
+    padding: 10px;
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sale-notification.error .sale-notification-button {
+    background: var(--danger-color);
+}
+
+.sale-notification-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN POUR MOBILE ET IPHONE
+   ============================================ */
+
+/* Tablettes et petits écrans (max-width: 768px) */
+@media (max-width: 768px) {
+    .tickets-seller-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+        padding: 20px 15px;
+    }
+    
+    .header-content h1 {
+        font-size: 1.4rem;
+    }
+    
+    .header-content p {
+        font-size: 0.85rem;
+    }
+    
+    .tickets-seller-content {
+        padding: 20px 15px;
+    }
+    
+    .sell-ticket-btn {
+        padding: 20px 30px;
+        font-size: 1.1rem;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .stats-section {
+        padding: 20px 15px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .offers-selection {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        padding: 20px 15px;
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.3rem;
+    }
+    
+    .form-group input {
+        font-size: 16px; /* Évite le zoom automatique sur iOS */
+    }
+    
+    .sale-notification {
+        width: 95%;
+        padding: 20px 15px;
+    }
+}
+
+/* iPhone et petits téléphones (max-width: 480px) */
+@media (max-width: 480px) {
+    .tickets-seller-header {
+        padding: 15px 10px;
+    }
+    
+    .header-content h1 {
+        font-size: 1.2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .header-content h1 i {
+        font-size: 1.1rem;
+    }
+    
+    .logout-btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .logout-btn span {
+        display: none; /* Masquer le texte sur très petits écrans */
+    }
+    
+    .tickets-seller-content {
+        padding: 15px 10px;
+    }
+    
+    .main-action-area {
+        margin-bottom: 25px;
+    }
+    
+    .sell-ticket-btn {
+        padding: 18px 25px;
+        font-size: 1rem;
+        width: 100%;
+    }
+    
+    .sell-ticket-btn i {
+        font-size: 1.2rem;
+    }
+    
+    .stats-section {
+        padding: 15px 10px;
+    }
+    
+    .stats-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+    }
+    
+    .stat-value {
+        font-size: 1.3rem;
+    }
+    
+    .stat-subvalue {
+        font-size: 0.9rem;
+    }
+    
+    .modal-content {
+        padding: 15px 10px;
+        border-radius: 8px;
+    }
+    
+    .modal-content .close {
+        right: 10px;
+        top: 10px;
+        font-size: 24px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-group input {
+        padding: 10px;
+        font-size: 16px; /* Important pour éviter le zoom sur iOS */
+    }
+    
+    .offer-button {
+        padding: 12px;
+    }
+    
+    .offer-quantity {
+        font-size: 1rem;
+    }
+    
+    .offer-price {
+        font-size: 1.1rem;
+    }
+    
+    .ticket-total-display {
+        padding: 12px;
+        font-size: 1.1rem;
+        margin: 15px 0;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+    
+    .sale-notification {
+        padding: 15px 10px;
+        border-radius: 8px;
+    }
+    
+    .sale-notification-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .sale-notification-content {
+        font-size: 0.9rem;
+        margin: 12px 0;
+    }
+    
+    .sale-notification-button {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+}
+
+/* iPhone en mode paysage (max-width: 896px et orientation landscape) */
+@media (max-width: 896px) and (orientation: landscape) {
+    .tickets-seller-header {
+        padding: 15px 20px;
+    }
+    
+    .header-content h1 {
+        font-size: 1.3rem;
+    }
+    
+    .tickets-seller-content {
+        padding: 15px 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .modal-content {
+        max-height: 90vh;
+    }
+}
+
+/* Améliorations tactiles pour mobile */
+@media (hover: none) and (pointer: coarse) {
+    .sell-ticket-btn,
+    .offer-button,
+    .btn-primary,
+    .btn-secondary,
+    .logout-btn,
+    .sale-notification-button {
+        min-height: 44px; /* Taille minimale recommandée pour le tactile */
+        -webkit-tap-highlight-color: rgba(0, 102, 204, 0.2);
+    }
+    
+    .sell-ticket-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .offer-button:active {
+        transform: scale(0.95);
+    }
+    
+    .btn-primary:active,
+    .btn-secondary:active {
+        transform: scale(0.98);
+    }
+    
+    .stat-card:active {
+        transform: scale(0.98);
+    }
+    
+    .modal-content .close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Optimisations pour l'affichage sur mobile */
+@media screen and (max-width: 768px) {
+    /* Améliorer la lisibilité */
+    body {
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Éviter le zoom automatique sur les inputs iOS */
+    input[type="email"],
+    input[type="text"],
+    input[type="number"] {
+        font-size: 16px !important;
+    }
+    
+    /* Améliorer le scroll sur mobile */
+    .tickets-seller-content {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-content {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Support pour les très petits écrans (iPhone SE, etc.) */
+@media (max-width: 375px) {
+    .header-content h1 {
+        font-size: 1rem;
+    }
+    
+    .sell-ticket-btn {
+        padding: 15px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .stat-subvalue {
+        font-size: 0.85rem;
+    }
+}

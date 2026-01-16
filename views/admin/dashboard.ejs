@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Cantine</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css">
 </head>
@@ -32,6 +32,15 @@
                 </li>
                 <li data-tab="users">
                     <i class="fas fa-users"></i> Utilisateurs
+                </li>
+                <li data-tab="import-export">
+                    <i class="fas fa-download"></i> Import/Export
+                </li>
+                <li data-tab="tickets">
+                    <i class="fas fa-ticket-alt"></i> Tirage au sort
+                </li>
+                <li data-tab="smtp">
+                    <i class="fas fa-envelope"></i> Configuration SMTP
                 </li>
             </ul>
             <div class="admin-footer">
@@ -139,73 +148,155 @@
             </div>
 
             <div class="tab-content" id="reports">
-                <div class="content-header">
-                    <h1>Rapports</h1>
-                    <div class="date-filter">
-                        <label>Du:</label>
-                        <input type="date" id="report-start-date">
-                        <label>Au:</label>
-                        <input type="date" id="report-end-date">
-                        <button onclick="filterReports()" class="filter-btn">
-                            <i class="fas fa-filter"></i> Filtrer
-                        </button>
+                <div class="reports-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-chart-line"></i> Rapports de ventes</h1>
+                        <p class="subtitle">Analysez vos performances et vos ventes</p>
+                    </div>
+                    <div class="date-filter-card">
+                        <div class="filter-header">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Période</span>
+                        </div>
+                        <div class="filter-inputs">
+                            <div class="date-input-group">
+                                <label for="report-start-date">Du</label>
+                                <input type="date" id="report-start-date">
+                            </div>
+                            <div class="date-input-group">
+                                <label for="report-end-date">Au</label>
+                                <input type="date" id="report-end-date">
+                            </div>
+                            <button onclick="filterReports()" class="filter-btn-primary">
+                                <i class="fas fa-filter"></i>
+                                <span>Appliquer</span>
+                            </button>
+                            <button onclick="resetReportsFilter()" class="filter-btn-secondary">
+                                <i class="fas fa-redo"></i>
+                                <span>Réinitialiser</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Statistiques globales -->
-                <div class="reports-summary">
-                    <div class="stat-card">
-                        <h3>Ventes totales</h3>
-                        <p id="total-sales-value">0.00$</p>
+                <!-- Statistiques globales améliorées -->
+                <div class="reports-summary-enhanced">
+                    <div class="stat-card-enhanced sales">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Ventes totales</h3>
+                            <p class="stat-value" id="total-sales-value">0.00$</p>
+                            <div class="stat-trend" id="sales-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>--</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h3>Profit total</h3>
-                        <p id="total-profit-value">0.00$</p>
+                    <div class="stat-card-enhanced profit">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Profit total</h3>
+                            <p class="stat-value" id="total-profit-value">0.00$</p>
+                            <div class="stat-trend" id="profit-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>--</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h3>Nombre de transactions</h3>
-                        <p id="total-transactions-value">0</p>
+                    <div class="stat-card-enhanced transactions">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Transactions</h3>
+                            <p class="stat-value" id="total-transactions-value">0</p>
+                            <div class="stat-trend" id="transactions-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card-enhanced average">
+                        <div class="stat-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Panier moyen</h3>
+                            <p class="stat-value" id="average-cart-value">0.00$</p>
+                            <div class="stat-trend" id="average-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>--</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Rapports détaillés -->
-                <div class="reports-grid">
+                <div class="reports-grid-enhanced">
                     <!-- Ventes par produit -->
-                    <div class="report-card">
-                        <h3>Ventes par produit</h3>
-                        <div class="table-container">
-                            <table id="product-sales-table">
-                                <thead>
-                                    <tr>
-                                        <th>Produit</th>
-                                        <th>Quantité</th>
-                                        <th>Ventes</th>
-                                        <th>Profit</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rempli dynamiquement -->
-                                </tbody>
-                            </table>
+                    <div class="report-card-enhanced">
+                        <div class="report-card-header">
+                            <div class="report-title">
+                                <i class="fas fa-box"></i>
+                                <h3>Ventes par produit</h3>
+                            </div>
+                            <div class="report-actions">
+                                <button class="icon-btn" onclick="exportProductSales()" title="Exporter">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="report-card-body">
+                            <div class="table-container-enhanced">
+                                <table id="product-sales-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Produit</th>
+                                            <th>Quantité</th>
+                                            <th>Ventes</th>
+                                            <th>Profit</th>
+                                            <th>Performance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rempli dynamiquement -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Ventes par catégorie -->
-                    <div class="report-card">
-                        <h3>Ventes par catégorie</h3>
-                        <div class="table-container">
-                            <table id="category-sales-table">
-                                <thead>
-                                    <tr>
-                                        <th>Catégorie</th>
-                                        <th>Ventes</th>
-                                        <th>Profit</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rempli dynamiquement -->
-                                </tbody>
-                            </table>
+                    <div class="report-card-enhanced">
+                        <div class="report-card-header">
+                            <div class="report-title">
+                                <i class="fas fa-tags"></i>
+                                <h3>Ventes par catégorie</h3>
+                            </div>
+                        </div>
+                        <div class="report-card-body">
+                            <div class="category-chart-container" id="category-chart-container">
+                                <!-- Graphique sera ajouté ici -->
+                            </div>
+                            <div class="table-container-enhanced">
+                                <table id="category-sales-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Catégorie</th>
+                                            <th>Ventes</th>
+                                            <th>Profit</th>
+                                            <th>% du total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rempli dynamiquement -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -350,6 +441,366 @@
                             <!-- Rempli dynamiquement -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="import-export">
+                <div class="section-header">
+                    <h2>Import / Export des données</h2>
+                </div>
+                
+                <div class="import-export-container">
+                    <!-- Section Export -->
+                    <div class="export-section">
+                        <h3><i class="fas fa-download"></i> Exporter les données</h3>
+                        <p>Exportez vos données dans un fichier JSON. Sélectionnez ce que vous souhaitez exporter.</p>
+                        
+                        <div class="export-options">
+                            <h4>Options d'export :</h4>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="export-products" checked>
+                                Exporter les produits
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="export-categories" checked>
+                                Exporter les catégories
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="export-coupons" checked>
+                                Exporter les coupons
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="export-users">
+                                Exporter les utilisateurs (sans mots de passe)
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="export-sales">
+                                Exporter les ventes
+                            </label>
+                        </div>
+                        
+                        <button class="add-button" onclick="exportData()">
+                            <i class="fas fa-file-download"></i>
+                            <span>Exporter les données</span>
+                        </button>
+                    </div>
+
+                    <!-- Section Import -->
+                    <div class="import-section">
+                        <h3><i class="fas fa-upload"></i> Importer des données</h3>
+                        <p>Importez des données depuis un fichier JSON exporté précédemment.</p>
+                        
+                        <div class="import-options">
+                            <h4>Options d'import :</h4>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-products" checked>
+                                Importer les produits
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-categories" checked>
+                                Importer les catégories
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-coupons" checked>
+                                Importer les coupons
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-users">
+                                Importer les utilisateurs (non recommandé)
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-sales">
+                                Importer les ventes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="import-overwrite">
+                                Remplacer les données existantes
+                            </label>
+                        </div>
+                        
+                        <div class="file-input-container">
+                            <input type="file" id="import-file" accept=".json" style="display: none;">
+                            <button class="add-button" onclick="document.getElementById('import-file').click()">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Sélectionner un fichier</span>
+                            </button>
+                            <span id="selected-file-name" class="file-name"></span>
+                        </div>
+                        
+                        <button class="add-button" id="import-btn" onclick="importData()" disabled>
+                            <i class="fas fa-file-upload"></i>
+                            <span>Importer les données</span>
+                        </button>
+                        
+                        <div id="import-results" class="import-results" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tickets">
+                <div class="section-header">
+                    <h2>Tirage au sort - Gestion des coupons</h2>
+                    <a href="/tickets" target="_blank" class="add-button">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span>Page d'achat</span>
+                    </a>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="tickets-stats">
+                    <div class="stat-card">
+                        <h3>Total de coupons vendus</h3>
+                        <p id="total-tickets">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Montant total</h3>
+                        <p id="total-amount-stats">0.00$</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Gagnants</h3>
+                        <p id="total-winners">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Tickets éligibles</h3>
+                        <p id="eligible-tickets">0</p>
+                    </div>
+                </div>
+
+                <!-- Section tirage au sort -->
+                <div class="draw-section">
+                    <h3><i class="fas fa-dice"></i> Effectuer un tirage au sort</h3>
+                    <p>Tirez au hasard un gagnant parmi tous les coupons vendus (non gagnants et non annulés).</p>
+                    <button class="add-button" onclick="drawWinner()" id="draw-btn">
+                        <i class="fas fa-magic"></i>
+                        <span>Tirer un gagnant</span>
+                    </button>
+                    <div id="draw-result" class="draw-result" style="display: none;"></div>
+                </div>
+
+                <!-- Liste des tickets -->
+                <div class="tickets-list-section">
+                    <div class="table-header">
+                        <h3>Liste des coupons vendus</h3>
+                        <div class="filters">
+                            <input type="email" id="filter-email" placeholder="Filtrer par email...">
+                            <select id="filter-winner">
+                                <option value="">Tous</option>
+                                <option value="true">Gagnants seulement</option>
+                                <option value="false">Non gagnants seulement</option>
+                            </select>
+                            <select id="filter-status">
+                                <option value="">Tous les statuts</option>
+                                <option value="active">Actifs</option>
+                                <option value="cancelled">Annulés</option>
+                            </select>
+                            <button onclick="loadTickets()" class="filter-btn">
+                                <i class="fas fa-filter"></i> Filtrer
+                            </button>
+                        </div>
+                    </div>
+                    <table id="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>Numéro</th>
+                                <th>Email</th>
+                                <th>Date d'achat</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                    <div id="tickets-pagination" class="pagination"></div>
+                </div>
+
+                <!-- Configuration des prix -->
+                <div class="ticket-config-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-cog"></i> Configuration des prix</h3>
+                        <button class="add-button" onclick="loadTicketConfig()">
+                            <i class="fas fa-sync"></i>
+                            <span>Actualiser</span>
+                        </button>
+                    </div>
+                    
+                    <div class="config-form-container">
+                        <form id="ticket-config-form">
+                            <div class="form-group">
+                                <label for="ticket-base-price">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    Prix de base par billet
+                                </label>
+                                <input type="number" id="ticket-base-price" step="0.01" min="0" required>
+                                <small>Prix appliqué si aucune offre ne correspond</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-tags"></i>
+                                    Offres par quantité
+                                </label>
+                                <div id="quantity-offers-list" class="quantity-offers-list">
+                                    <!-- Les offres seront ajoutées ici -->
+                                </div>
+                                <button type="button" class="btn-secondary" onclick="addQuantityOffer()">
+                                    <i class="fas fa-plus"></i>
+                                    Ajouter une offre
+                                </button>
+                            </div>
+
+                            <div class="form-buttons">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Sauvegarder la configuration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Logs d'annulation -->
+                <div class="tickets-logs-section">
+                    <div class="table-header">
+                        <h3><i class="fas fa-history"></i> Logs d'annulation</h3>
+                        <button onclick="loadTicketLogs()" class="filter-btn">
+                            <i class="fas fa-sync"></i> Actualiser
+                        </button>
+                    </div>
+                    <table id="tickets-logs-table">
+                        <thead>
+                            <tr>
+                                <th>Numéro de billet</th>
+                                <th>Email</th>
+                                <th>Date d'achat original</th>
+                                <th>Montant</th>
+                                <th>Annulé par</th>
+                                <th>Date d'annulation</th>
+                                <th>Raison</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                    <div id="tickets-logs-pagination" class="pagination"></div>
+                </div>
+
+                <!-- Section réinitialisation -->
+                <div class="reset-section" style="margin-top: 30px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+                    <h3 style="color: #856404; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Zone de réinitialisation</h3>
+                    <p style="color: #856404; margin-bottom: 15px;">Attention : Cette action supprimera <strong>TOUS</strong> les billets de manière permanente. Cette action ne peut pas être annulée.</p>
+                    <button class="btn-danger" onclick="resetAllTickets()" id="reset-all-btn" style="padding: 12px 24px; font-size: 1rem;">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Supprimer tous les billets</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="smtp">
+                <div class="section-header">
+                    <h2>Configuration SMTP</h2>
+                    <p>Configurez les paramètres d'envoi d'emails pour les notifications et les tickets</p>
+                </div>
+
+                <div class="smtp-config-section">
+                    <form id="smtp-config-form">
+                        <div class="form-group">
+                            <label for="smtp-host">
+                                <i class="fas fa-server"></i>
+                                Serveur SMTP (Host)
+                            </label>
+                            <input type="text" id="smtp-host" required placeholder="smtp.gmail.com">
+                            <small>Exemple: smtp.gmail.com, smtp.outlook.com</small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="smtp-port">
+                                    <i class="fas fa-network-wired"></i>
+                                    Port
+                                </label>
+                                <input type="number" id="smtp-port" min="1" max="65535" required placeholder="587">
+                                <small>587 (TLS) ou 465 (SSL)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp-secure">
+                                    <i class="fas fa-lock"></i>
+                                    Connexion sécurisée
+                                </label>
+                                <select id="smtp-secure" required>
+                                    <option value="false">TLS (Port 587)</option>
+                                    <option value="true">SSL (Port 465)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtp-user">
+                                <i class="fas fa-user"></i>
+                                Nom d'utilisateur / Email
+                            </label>
+                            <input type="email" id="smtp-user" required placeholder="votre@email.com">
+                            <small>L'adresse email utilisée pour l'authentification SMTP</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtp-password">
+                                <i class="fas fa-key"></i>
+                                Mot de passe / Mot de passe d'application
+                            </label>
+                            <input type="password" id="smtp-password" placeholder="Laissez vide pour conserver l'actuel">
+                            <small id="smtp-password-info">Pour Gmail, utilisez un mot de passe d'application</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtp-from">
+                                <i class="fas fa-paper-plane"></i>
+                                Adresse email "De" (From)
+                            </label>
+                            <input type="email" id="smtp-from" required placeholder="noreply@cantine.com">
+                            <small>L'adresse email qui apparaîtra comme expéditeur</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtp-from-name">
+                                <i class="fas fa-user-tag"></i>
+                                Nom de l'expéditeur
+                            </label>
+                            <input type="text" id="smtp-from-name" placeholder="Cantine">
+                            <small>Le nom qui apparaîtra comme expéditeur (ex: "Cantine" au lieu de juste l'email)</small>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i>
+                                Sauvegarder la configuration
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="testSMTPConfig()">
+                                <i class="fas fa-paper-plane"></i>
+                                Tester la configuration
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="smtp-test-section" class="smtp-test-section" style="display: none;">
+                        <h3><i class="fas fa-vial"></i> Test d'envoi d'email</h3>
+                        <div class="form-group">
+                            <label for="test-email">
+                                <i class="fas fa-envelope"></i>
+                                Adresse email de test
+                            </label>
+                            <input type="email" id="test-email" placeholder="test@example.com">
+                        </div>
+                        <button class="btn-primary" onclick="sendTestEmail()">
+                            <i class="fas fa-paper-plane"></i>
+                            Envoyer un email de test
+                        </button>
+                        <div id="smtp-test-result" class="test-result"></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -531,6 +982,7 @@
                     <select id="user-role" required>
                         <option value="user">Utilisateur</option>
                         <option value="admin">Administrateur</option>
+                        <option value="ticket_seller">Vendeur de tickets</option>
                     </select>
                 </div>
                 <div class="form-group">
