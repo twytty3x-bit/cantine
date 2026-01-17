@@ -74,7 +74,7 @@ body {
     z-index: 1000;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
 }
@@ -84,7 +84,7 @@ body {
    ============================================ */
 .bottom-actions {
     position: fixed;
-    top: 76px;
+    bottom: var(--spacing-md);
     right: var(--spacing-md);
     display: flex;
     flex-direction: row;
@@ -147,7 +147,7 @@ body {
    ============================================ */
 .products-section {
     flex: 1;
-    padding: calc(64px + var(--spacing-md)) var(--spacing-md) var(--spacing-md);
+    padding: calc(64px + var(--spacing-sm)) var(--spacing-md) var(--spacing-md);
     margin-right: 420px;
     display: flex;
     flex-direction: column;
@@ -272,6 +272,7 @@ body {
     overflow: visible;
     position: relative;
     border: 1px solid var(--border-light);
+    height: 100%;
 }
 
 .product-tile:hover {
@@ -315,6 +316,7 @@ body {
     padding: var(--spacing-sm);
     background: white;
     border-radius: var(--radius-sm);
+    display: block;
 }
 
 /* Informations produit */
@@ -334,6 +336,8 @@ body {
     text-overflow: ellipsis;
     flex-shrink: 0;
     word-wrap: break-word;
+    visibility: visible;
+    opacity: 1;
 }
 
 .product-price {
@@ -344,6 +348,8 @@ body {
     padding: 0 var(--spacing-xs);
     flex-shrink: 0;
     line-height: 1.2;
+    visibility: visible;
+    opacity: 1;
 }
 
 .product-stock {
@@ -353,6 +359,8 @@ body {
     padding: 0 var(--spacing-xs);
     flex-shrink: 0;
     line-height: 1.2;
+    visibility: visible;
+    opacity: 1;
 }
 
 /* ============================================
@@ -858,26 +866,52 @@ body {
     
     .products-section {
         margin-right: 400px;
-        padding: calc(64px + var(--spacing-md)) var(--spacing-lg) var(--spacing-lg);
+        padding: calc(64px + var(--spacing-sm)) var(--spacing-lg) var(--spacing-lg);
     }
     
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: var(--spacing-md);
+        align-items: start;
     }
     
     .product-tile {
-        min-height: 260px;
+        min-height: 280px;
+        max-height: none;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
     }
     
     .product-image {
-        height: 150px;
-        min-height: 150px;
-        max-height: 150px;
+        height: 140px;
+        min-height: 140px;
+        max-height: 140px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .product-name,
+    .product-price,
+    .product-stock {
+        visibility: visible;
+        opacity: 1;
+        flex-shrink: 0;
     }
     
     .cart-section {
         width: 400px;
+    }
+    
+    .bottom-actions {
+        bottom: var(--spacing-md);
     }
 }
 
@@ -892,7 +926,7 @@ body {
     .products-section {
         flex: 1;
         margin-right: 0;
-        padding: calc(64px + var(--spacing-md)) var(--spacing-md) var(--spacing-md);
+        padding: calc(64px + var(--spacing-sm)) var(--spacing-md) var(--spacing-md);
         overflow-y: auto;
         min-height: 0;
         display: flex;
@@ -912,27 +946,67 @@ body {
         gap: var(--spacing-md);
         flex: 1;
         min-height: 0;
+        align-items: start;
     }
     
     .product-tile {
-        min-height: 240px;
+        min-height: 280px;
+        max-height: none;
         padding: var(--spacing-md);
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
     }
     
     .product-image {
-        height: 130px;
-        min-height: 130px;
-        max-height: 130px;
+        height: 120px;
+        min-height: 120px;
+        max-height: 120px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        padding: var(--spacing-xs);
     }
     
     .product-name {
         font-size: 0.875rem;
         min-height: 2.4em;
         max-height: 2.4em;
+        margin: var(--spacing-sm) 0;
+        padding: 0;
+        flex-shrink: 0;
+        visibility: visible;
+        opacity: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
     
     .product-price {
         font-size: 1.125rem;
+        margin: var(--spacing-sm) 0;
+        padding: 0;
+        flex-shrink: 0;
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    .product-stock {
+        font-size: 0.75rem;
+        margin-top: var(--spacing-xs);
+        padding: 0;
+        flex-shrink: 0;
+        visibility: visible;
+        opacity: 1;
     }
     
     .cart-section {
@@ -955,8 +1029,7 @@ body {
     }
     
     .bottom-actions {
-        top: auto;
-        bottom: calc(50vh + 120px);
+        bottom: calc(50vh + 100px);
         right: var(--spacing-md);
     }
     
@@ -972,33 +1045,59 @@ body {
 /* iPad Mini & Petites Tablettes (640px - 767px) */
 @media screen and (min-width: 640px) and (max-width: 767px) {
     .products-section {
-        padding: calc(60px + var(--spacing-md)) var(--spacing-sm) var(--spacing-sm);
+        padding: calc(60px + var(--spacing-sm)) var(--spacing-sm) var(--spacing-sm);
     }
     
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: var(--spacing-sm);
+        align-items: start;
     }
     
     .product-tile {
-        min-height: 220px;
+        min-height: 260px;
+        max-height: none;
         padding: var(--spacing-sm);
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
     }
     
     .product-image {
         height: 110px;
         min-height: 110px;
         max-height: 110px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
     }
     
     .product-name {
         font-size: 0.8125rem;
         min-height: 2.2em;
         max-height: 2.2em;
+        visibility: visible;
+        opacity: 1;
+        flex-shrink: 0;
     }
     
     .product-price {
         font-size: 1rem;
+        visibility: visible;
+        opacity: 1;
+        flex-shrink: 0;
+    }
+    
+    .product-stock {
+        visibility: visible;
+        opacity: 1;
+        flex-shrink: 0;
     }
     
     .cart-section {
