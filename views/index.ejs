@@ -85,20 +85,6 @@
                 </button>
             </div>
         </div>
-        
-        <!-- Boutons d'action en bas à droite -->
-        <div class="bottom-actions">
-            <button id="logout-btn" class="logout-btn" title="Déconnexion" onclick="handleLogout(event)">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="logout-text">Déconnexion</span>
-            </button>
-            <% if (user && user.role === 'admin') { %>
-            <a href="/admin" class="admin-link">
-                <i class="fas fa-cog"></i>
-                <span class="admin-text">Admin</span>
-            </a>
-            <% } %>
-        </div>
     </div>
 
     <!-- Modal pour la vente de coupons -->
