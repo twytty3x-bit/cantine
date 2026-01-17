@@ -87,8 +87,18 @@ router.get('/products', async (req, res) => {
             
             // Ajouter un paramètre de version basé sur la date de mise à jour pour forcer le rechargement
             if (product.image) {
+                // S'assurer que le chemin commence par /uploads/products/ ou est un chemin absolu
+                let imagePath = product.image;
+                if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+                    imagePath = `/uploads/products/${imagePath}`;
+                } else if (!imagePath.startsWith('/uploads/products/') && imagePath.startsWith('/uploads/')) {
+                    // Si c'est /uploads/ mais pas /uploads/products/, corriger
+                    imagePath = imagePath.replace('/uploads/', '/uploads/products/');
+                }
+                
                 const timestamp = product.updatedAt ? new Date(product.updatedAt).getTime() : Date.now();
-                product.imageUrl = `${product.image}?v=${timestamp}`;
+                product.imageUrl = `${imagePath}?v=${timestamp}`;
+                product.image = imagePath; // Mettre à jour aussi le chemin original
             }
         });
         
