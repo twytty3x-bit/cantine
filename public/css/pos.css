@@ -921,12 +921,12 @@ body {
     }
     
     .product-tile {
-        height: 280px !important;
-        min-height: 280px !important;
-        max-height: 280px !important;
+        height: 300px !important;
+        min-height: 300px !important;
+        max-height: 300px !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         justify-content: flex-start !important;
         box-sizing: border-box !important;
         padding: 10px !important;
@@ -1025,19 +1025,23 @@ body {
     
     .product-stock {
         font-size: 0.75rem !important;
-        margin-top: var(--spacing-xs) !important;
+        margin-top: auto !important;
         margin-bottom: 0 !important;
-        padding: 0 var(--spacing-xs) !important;
+        padding: 0 4px !important;
         flex-shrink: 0 !important;
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
         min-height: 1.2em !important;
+        max-height: 1.5em !important;
         display: block !important;
         color: var(--text-light) !important;
         line-height: 1.3 !important;
         position: relative !important;
         z-index: 1 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
     }
     
     .cart-section {
@@ -1088,34 +1092,45 @@ body {
         height: 300px !important;
         min-height: 300px !important;
         max-height: 300px !important;
-        padding: 12px !important;
+        padding: 10px !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: visible !important;
-        justify-content: space-between !important;
+        overflow: hidden !important;
+        justify-content: flex-start !important;
         box-sizing: border-box !important;
         position: relative !important;
+        gap: 4px !important;
     }
     
     /* Forcer l'ordre d'affichage des éléments dans les tuiles */
     .product-tile .product-image {
         order: 1 !important;
+        flex: 0 0 50px !important;
+        margin-bottom: 4px !important;
     }
     
     .product-tile .product-name {
         order: 2 !important;
+        flex: 0 0 2.4em !important;
+        margin: 4px 0 !important;
+        max-height: 2.4em !important;
     }
     
     .product-tile .product-price {
         order: 3 !important;
         flex: 0 0 auto !important;
-        margin: 8px 0 4px 0 !important;
+        margin: 4px 0 !important;
+        min-height: 20px !important;
+        max-height: 28px !important;
     }
     
     .product-tile .product-stock {
         order: 4 !important;
         flex: 0 0 auto !important;
-        margin-top: 0 !important;
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+        min-height: 1.2em !important;
+        max-height: 1.5em !important;
     }
     
     .product-image {
@@ -1376,13 +1391,13 @@ body {
     }
     
     .product-tile {
-        height: 280px !important;
-        min-height: 280px !important;
-        max-height: 280px !important;
+        height: 300px !important;
+        min-height: 300px !important;
+        max-height: 300px !important;
         padding: 10px !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         justify-content: flex-start !important;
         box-sizing: border-box !important;
         position: relative !important;
@@ -1393,24 +1408,31 @@ body {
     .product-tile .product-image {
         order: 1 !important;
         flex: 0 0 50px !important;
+        margin-bottom: 4px !important;
     }
     
     .product-tile .product-name {
         order: 2 !important;
-        flex: 0 0 auto !important;
+        flex: 0 0 2.4em !important;
         margin: 4px 0 !important;
+        max-height: 2.4em !important;
     }
     
     .product-tile .product-price {
         order: 3 !important;
         flex: 0 0 auto !important;
         margin: 4px 0 !important;
+        min-height: 22px !important;
+        max-height: 30px !important;
     }
     
     .product-tile .product-stock {
         order: 4 !important;
         flex: 0 0 auto !important;
         margin-top: auto !important;
+        margin-bottom: 0 !important;
+        min-height: 1.2em !important;
+        max-height: 1.5em !important;
     }
     
     .product-image {
@@ -1442,22 +1464,24 @@ body {
     }
     
     .product-price {
-        font-size: 1rem !important;
+        font-size: 0.9375rem !important;
         margin: 4px 0 !important;
-        padding: 4px 8px !important;
+        padding: 3px 6px !important;
         flex-shrink: 0 !important;
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
-        min-height: 22px !important;
-        max-height: none !important;
+        min-height: 20px !important;
+        max-height: 28px !important;
         display: block !important;
         position: relative !important;
         z-index: 100 !important;
         color: #2563eb !important;
         font-weight: 700 !important;
-        line-height: 1.4 !important;
-        overflow: visible !important;
+        line-height: 1.3 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
         background: rgba(255, 255, 255, 0.95) !important;
         border: 1px solid #e5e7eb !important;
         border-radius: 4px !important;
@@ -1469,17 +1493,21 @@ body {
     
     .product-stock {
         font-size: 0.75rem !important;
-        margin-top: var(--spacing-xs) !important;
+        margin-top: auto !important;
         margin-bottom: 0 !important;
-        padding: 0 var(--spacing-xs) !important;
+        padding: 0 4px !important;
         flex-shrink: 0 !important;
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
         min-height: 1.2em !important;
+        max-height: 1.5em !important;
         display: block !important;
         color: var(--text-light) !important;
         line-height: 1.3 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
     }
     
     .cart-section {
