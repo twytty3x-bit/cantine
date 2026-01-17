@@ -1009,6 +1009,16 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
     try {
         let data;
         let options = {};
+        
+        // Initialiser results AVANT de l'utiliser
+        const results = {
+            products: { imported: 0, errors: [] },
+            categories: { imported: 0, errors: [] },
+            coupons: { imported: 0, errors: [] },
+            users: { imported: 0, errors: [] },
+            sales: { imported: 0, errors: [] },
+            images: { copied: 0, errors: [] }
+        };
 
         // Si un fichier ZIP est fourni, l'extraire
         if (req.file) {
@@ -1081,14 +1091,7 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
             overwrite = false // Si true, remplace les données existantes
         } = options;
 
-        const results = {
-            products: { imported: 0, errors: [] },
-            categories: { imported: 0, errors: [] },
-            coupons: { imported: 0, errors: [] },
-            users: { imported: 0, errors: [] },
-            sales: { imported: 0, errors: [] },
-            images: { copied: 0, errors: [] }
-        };
+        // results est déjà initialisé au début du try block
 
         // Importer les catégories en premier (car les produits en dépendent)
         if (importCategories && data.categories) {
