@@ -35,30 +35,36 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 // Limiter la taille des requêtes pour prévenir les attaques
-// Ne pas parser multipart/form-data (géré par multer)
-// IMPORTANT: Express.json() ne doit PAS être appliqué aux requêtes multipart/form-data
-// car multer doit gérer le body directement depuis le stream
+// IMPORTANT: Ne PAS parser multipart/form-data car multer doit gérer le stream brut
+// Express.json() consomme le stream, donc multer ne peut plus le lire après
 
-// Middleware conditionnel pour JSON
+// Créer les middlewares de parsing
+const jsonParser = express.json({ limit: '10mb' });
+const urlencodedParser = express.urlencoded({ extended: true, limit: '10mb' });
+
+// Middleware conditionnel qui saute le parsing pour multipart/form-data
 app.use((req, res, next) => {
     const contentType = req.headers['content-type'] || '';
-    // Si c'est multipart/form-data, ne PAS parser, laisser multer gérer
+    
+    // DEBUG: Log le Content-Type
+    if (contentType.includes('multipart')) {
+        console.log('[MIDDLEWARE] Content-Type détecté comme multipart/form-data, saut du parsing');
+    }
+    
+    // Si c'est multipart/form-data, NE PAS parser - laisser multer gérer
     if (contentType.includes('multipart/form-data')) {
         return next();
     }
-    // Sinon, parser comme JSON
-    return express.json({ limit: '10mb' })(req, res, next);
-});
-
-// Middleware conditionnel pour URL-encoded
-app.use((req, res, next) => {
-    const contentType = req.headers['content-type'] || '';
-    // Si c'est multipart/form-data, ne PAS parser
-    if (contentType.includes('multipart/form-data')) {
-        return next();
-    }
-    // Sinon, parser comme URL-encoded
-    return express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    
+    // Pour les autres types, parser comme JSON d'abord
+    jsonParser(req, res, (err) => {
+        if (err) {
+            // Si erreur de parsing JSON, essayer URL-encoded
+            return urlencodedParser(req, res, next);
+        }
+        // Si le parsing JSON a réussi, continuer
+        next();
+    });
 });
 
 // Headers de sécurité
