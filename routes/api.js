@@ -1093,8 +1093,12 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                                 const targetStats = fs.statSync(targetPath);
                                 console.log(`✓ Copied: ${imageFile} (${targetStats.size} bytes)`);
                                 
-                                // Stocker dans le Map pour référence ultérieure
+                                // Stocker dans le Map pour référence ultérieure (insensible à la casse)
+                                // Stocker aussi avec l'extension en minuscule pour correspondance
                                 imageMap.set(imageFile.toLowerCase(), imageFile);
+                                // Stocker aussi avec juste le nom en minuscule (sans extension) pour correspondance flexible
+                                const nameWithoutExt = path.parse(imageFile).name.toLowerCase();
+                                imageMap.set(nameWithoutExt, imageFile);
                                 
                                 results.images.copied++;
                             } else {
@@ -1184,11 +1188,21 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                         
                         // Si on a un Map d'images importées, vérifier la correspondance (insensible à la casse)
                         if (req.importedImages && req.importedImages.size > 0) {
-                            const foundImage = req.importedImages.get(imageName.toLowerCase());
+                            // Essayer d'abord avec le nom complet en minuscule
+                            let foundImage = req.importedImages.get(imageName.toLowerCase());
+                            
+                            // Si pas trouvé, essayer avec juste le nom sans extension
+                            if (!foundImage) {
+                                const nameWithoutExt = path.parse(imageName).name.toLowerCase();
+                                foundImage = req.importedImages.get(nameWithoutExt);
+                            }
+                            
                             if (foundImage) {
-                                // Utiliser le nom exact du fichier copié
+                                // Utiliser le nom exact du fichier copié (avec la bonne casse et extension)
                                 imageName = foundImage;
                                 console.log(`Matched image for product ${productData.name}: ${imageName}`);
+                            } else {
+                                console.warn(`No match found in imported images for: ${imageName}`);
                             }
                         }
                         
@@ -1198,11 +1212,35 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                             // Le fichier existe, utiliser le chemin correct
                             productData.image = `/uploads/products/${imageName}`;
                             console.log(`✓ Image path updated for product ${productData.name}: ${productData.image}`);
+                            
+                            // Vérifier que le fichier est accessible (permissions)
+                            try {
+                                const stats = fs.statSync(imagePath);
+                                // Vérifier les permissions
+                                fs.accessSync(imagePath, fs.constants.R_OK);
+                                console.log(`  ✓ File accessible: ${stats.size} bytes`);
+                            } catch (statError) {
+                                console.warn(`  ✗ Warning: File not accessible: ${statError.message}`);
+                            }
                         } else {
-                            // Le fichier n'existe pas
-                            console.warn(`✗ Image file not found for product ${productData.name}: ${imageName} (searched: ${imagePath})`);
-                            // Garder le chemin quand même, peut-être que l'image sera ajoutée plus tard
-                            productData.image = `/uploads/products/${imageName}`;
+                            // Le fichier n'existe pas - essayer de trouver avec différentes casses
+                            const targetImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+                            if (fs.existsSync(targetImagesDir)) {
+                                const allFiles = fs.readdirSync(targetImagesDir);
+                                const foundFile = allFiles.find(f => f.toLowerCase() === imageName.toLowerCase());
+                                if (foundFile) {
+                                    imageName = foundFile;
+                                    productData.image = `/uploads/products/${imageName}`;
+                                    console.log(`✓ Found image with different case for product ${productData.name}: ${productData.image}`);
+                                } else {
+                                    console.warn(`✗ Image file not found for product ${productData.name}: ${imageName} (searched: ${imagePath})`);
+                                    console.warn(`  Available files: ${allFiles.slice(0, 5).join(', ')}...`);
+                                    productData.image = `/uploads/products/${imageName}`;
+                                }
+                            } else {
+                                console.error(`✗ Target images directory does not exist: ${targetImagesDir}`);
+                                productData.image = `/uploads/products/${imageName}`;
+                            }
                         }
                     }
                     
