@@ -1483,16 +1483,31 @@ async function importData() {
         const response = await fetch('/api/import', {
             method: 'POST',
             body: formData
+            // Ne pas définir Content-Type - le navigateur le fera automatiquement avec la boundary
         });
         
-        // Vérifier le type de contenu avant de parser
+        // Lire la réponse comme texte d'abord pour déboguer
+        const responseText = await response.text();
+        
+        // Vérifier le type de contenu
         const contentType = response.headers.get('content-type');
+        console.log('Content-Type de la réponse:', contentType);
+        console.log('Premiers caractères de la réponse:', responseText.substring(0, 100));
+        
+        // Si ce n'est pas JSON, c'est une erreur
         if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            throw new Error(`Erreur serveur: ${text.substring(0, 200)}`);
+            throw new Error(`Erreur serveur (${response.status}): ${responseText.substring(0, 200)}`);
         }
         
-        const result = await response.json();
+        // Parser comme JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Erreur de parsing JSON:', parseError);
+            console.error('Réponse complète:', responseText);
+            throw new Error(`Erreur de parsing JSON: ${parseError.message}. Réponse: ${responseText.substring(0, 200)}`);
+        }
         
         if (!response.ok) {
             throw new Error(result.message || 'Erreur lors de l\'import');

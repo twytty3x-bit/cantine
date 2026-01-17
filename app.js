@@ -36,33 +36,29 @@ app.use(express.static('public'));
 
 // Limiter la taille des requêtes pour prévenir les attaques
 // Ne pas parser multipart/form-data (géré par multer)
+// IMPORTANT: Express.json() ne doit PAS être appliqué aux requêtes multipart/form-data
+// car multer doit gérer le body directement depuis le stream
+
+// Middleware conditionnel pour JSON
 app.use((req, res, next) => {
     const contentType = req.headers['content-type'] || '';
-    // Si c'est multipart/form-data, passer au suivant sans parser
+    // Si c'est multipart/form-data, ne PAS parser, laisser multer gérer
     if (contentType.includes('multipart/form-data')) {
         return next();
     }
-    // Sinon, continuer normalement
-    next();
+    // Sinon, parser comme JSON
+    return express.json({ limit: '10mb' })(req, res, next);
 });
 
-// Appliquer les middlewares de parsing seulement si ce n'est pas multipart/form-data
+// Middleware conditionnel pour URL-encoded
 app.use((req, res, next) => {
     const contentType = req.headers['content-type'] || '';
-    if (!contentType.includes('multipart/form-data')) {
-        express.json({ limit: '10mb' })(req, res, next);
-    } else {
-        next();
+    // Si c'est multipart/form-data, ne PAS parser
+    if (contentType.includes('multipart/form-data')) {
+        return next();
     }
-});
-
-app.use((req, res, next) => {
-    const contentType = req.headers['content-type'] || '';
-    if (!contentType.includes('multipart/form-data')) {
-        express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
-    } else {
-        next();
-    }
+    // Sinon, parser comme URL-encoded
+    return express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
 });
 
 // Headers de sécurité

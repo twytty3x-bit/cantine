@@ -988,25 +988,23 @@ router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 // Importer des données (admin seulement)
-router.post('/import', authMiddleware, adminMiddleware, (req, res, next) => {
-    // Middleware pour gérer les erreurs multer
-    uploadZip.single('file')(req, res, (err) => {
-        if (err) {
-            // Si c'est une erreur multer, retourner JSON
-            if (err instanceof multer.MulterError) {
-                return res.status(400).json({ message: `Erreur d'upload: ${err.message}` });
-            }
-            // Si c'est une erreur de validation
-            if (err.message) {
-                return res.status(400).json({ message: err.message });
-            }
-            return res.status(400).json({ message: 'Erreur lors de l\'upload du fichier' });
-        }
-        next();
-    });
-}, async (req, res) => {
+// IMPORTANT: multer doit être appelé directement pour accéder au stream brut du body
+router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file'), async (req, res) => {
     let zipFile = null;
     let extractedDir = null;
+    
+    // Logs de débogage
+    console.log('=== IMPORT DEBUG ===');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Body keys:', req.body ? Object.keys(req.body) : 'no body');
+    console.log('Body content:', req.body ? JSON.stringify(req.body).substring(0, 100) : 'no body');
+    console.log('File:', req.file ? req.file.filename : 'no file');
+    console.log('File validation error:', req.fileValidationError);
+    
+    // Gérer les erreurs multer
+    if (req.fileValidationError) {
+        return res.status(400).json({ message: req.fileValidationError });
+    }
     
     try {
         let data;
