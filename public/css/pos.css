@@ -325,15 +325,15 @@ body {
 /* Image produit */
 .product-image {
     width: 100%;
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
+    height: 100px;
+    min-height: 100px;
+    max-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-color);
     border-radius: var(--radius-sm);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     overflow: hidden;
     flex-shrink: 0;
     position: relative;
@@ -361,9 +361,9 @@ body {
     padding: 0 var(--spacing-xs);
     font-weight: 500;
     line-height: 1.3;
-    height: 2.6em;
-    min-height: 2.6em;
-    max-height: 2.6em;
+    height: 2.4em;
+    min-height: 2.4em;
+    max-height: 2.4em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -378,12 +378,12 @@ body {
 
 .product-price {
     color: var(--primary-color);
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
     margin: var(--spacing-xs) 0;
     padding: 0 var(--spacing-xs);
     flex-shrink: 0;
-    line-height: 1.2;
+    line-height: 1.3;
     height: auto;
     min-height: 1.5em;
     visibility: visible !important;
@@ -396,13 +396,15 @@ body {
     font-size: 0.8125rem;
     color: var(--text-light);
     margin-top: var(--spacing-xs);
+    margin-bottom: 0;
     padding: 0 var(--spacing-xs);
     flex-shrink: 0;
-    line-height: 1.2;
-    height: 1.2em;
+    line-height: 1.3;
+    height: auto;
     min-height: 1.2em;
     visibility: visible !important;
     opacity: 1 !important;
+    display: block !important;
     box-sizing: border-box;
 }
 
@@ -927,14 +929,16 @@ body {
         overflow: hidden;
         justify-content: space-between;
         box-sizing: border-box;
+        padding: var(--spacing-sm) !important;
     }
     
     .product-image {
-        height: 90px;
-        min-height: 90px;
-        max-height: 90px;
+        height: 70px !important;
+        min-height: 70px !important;
+        max-height: 70px !important;
         flex-shrink: 0;
         overflow: hidden;
+        margin-bottom: var(--spacing-xs) !important;
     }
     
     .product-image img {
@@ -1008,13 +1012,13 @@ body {
     }
     
     .product-image {
-        height: 80px !important;
-        min-height: 80px !important;
-        max-height: 80px !important;
+        height: 70px !important;
+        min-height: 70px !important;
+        max-height: 70px !important;
         width: 100% !important;
         flex-shrink: 0 !important;
         overflow: hidden !important;
-        margin-bottom: var(--spacing-sm) !important;
+        margin-bottom: var(--spacing-xs) !important;
     }
     
     .product-image img {
@@ -1063,13 +1067,16 @@ body {
     .product-stock {
         font-size: 0.75rem !important;
         margin-top: var(--spacing-xs) !important;
+        margin-bottom: 0 !important;
         padding: 0 var(--spacing-xs) !important;
         flex-shrink: 0 !important;
         visibility: visible !important;
         opacity: 1 !important;
+        height: auto !important;
         min-height: 1.2em !important;
+        display: block !important;
         color: var(--text-light) !important;
-        line-height: 1.2 !important;
+        line-height: 1.3 !important;
         position: relative !important;
         z-index: 1 !important;
     }
@@ -1178,11 +1185,16 @@ body {
     
     .product-stock {
         margin-top: var(--spacing-xs);
+        margin-bottom: 0;
         visibility: visible;
         opacity: 1;
         flex-shrink: 0;
-        height: 1.2em;
+        height: auto;
         min-height: 1.2em;
+        display: block;
+        color: var(--text-light);
+        font-size: 0.8125rem;
+        line-height: 1.3;
     }
     
     .cart-section {
@@ -1257,9 +1269,13 @@ body {
     .product-stock {
         font-size: 0.6875rem;
         margin-top: var(--spacing-xs);
+        margin-bottom: 0;
         flex-shrink: 0;
-        height: 1.2em;
+        height: auto;
         min-height: 1.2em;
+        display: block;
+        color: var(--text-light);
+        line-height: 1.3;
     }
     
     .cart-section {
@@ -1353,9 +1369,13 @@ body {
     .product-stock {
         font-size: 0.625rem;
         margin-top: var(--spacing-xs);
+        margin-bottom: 0;
         flex-shrink: 0;
-        height: 1.2em;
+        height: auto;
         min-height: 1.2em;
+        display: block;
+        color: var(--text-light);
+        line-height: 1.3;
     }
     
     .cart-section {
