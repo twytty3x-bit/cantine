@@ -937,15 +937,15 @@ body {
     /* Forcer l'ordre d'affichage des éléments dans les tuiles en paysage */
     .product-tile .product-image {
         order: 1 !important;
-        flex: 0 0 40px !important;
+        flex: 0 0 30px !important;
         margin-bottom: 4px !important;
     }
     
     .product-tile .product-name {
         order: 2 !important;
-        flex: 0 0 2.2em !important;
+        flex: 0 0 2em !important;
         margin: 4px 0 !important;
-        max-height: 2.2em !important;
+        max-height: 2em !important;
     }
     
     .product-tile .product-price {
@@ -953,7 +953,7 @@ body {
         flex: 0 0 auto !important;
         margin: 4px 0 !important;
         min-height: 22px !important;
-        max-height: 30px !important;
+        max-height: 28px !important;
     }
     
     .product-tile .product-stock {
@@ -963,12 +963,15 @@ body {
         margin-bottom: 0 !important;
         min-height: 1.2em !important;
         max-height: 1.5em !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
     }
     
     .product-image {
-        height: 40px !important;
-        min-height: 40px !important;
-        max-height: 40px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
         flex-shrink: 0;
         overflow: hidden;
         margin-bottom: var(--spacing-xs) !important;
@@ -1007,8 +1010,8 @@ body {
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
-        min-height: 22px !important;
-        max-height: 30px !important;
+        min-height: 20px !important;
+        max-height: 26px !important;
         display: block !important;
         position: relative !important;
         z-index: 100 !important;
@@ -1412,15 +1415,15 @@ body {
     /* Forcer l'ordre d'affichage des éléments en paysage */
     .product-tile .product-image {
         order: 1 !important;
-        flex: 0 0 40px !important;
+        flex: 0 0 30px !important;
         margin-bottom: 4px !important;
     }
     
     .product-tile .product-name {
         order: 2 !important;
-        flex: 0 0 2.2em !important;
+        flex: 0 0 2em !important;
         margin: 4px 0 !important;
-        max-height: 2.2em !important;
+        max-height: 2em !important;
     }
     
     .product-tile .product-price {
@@ -1428,7 +1431,7 @@ body {
         flex: 0 0 auto !important;
         margin: 4px 0 !important;
         min-height: 22px !important;
-        max-height: 30px !important;
+        max-height: 28px !important;
     }
     
     .product-tile .product-stock {
@@ -1438,12 +1441,15 @@ body {
         margin-bottom: 0 !important;
         min-height: 1.2em !important;
         max-height: 1.5em !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
     }
     
     .product-image {
-        height: 40px !important;
-        min-height: 40px !important;
-        max-height: 40px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
         flex-shrink: 0;
         overflow: hidden;
         margin-bottom: var(--spacing-xs) !important;
@@ -1476,8 +1482,8 @@ body {
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
-        min-height: 22px !important;
-        max-height: 30px !important;
+        min-height: 20px !important;
+        max-height: 26px !important;
         display: block !important;
         position: relative !important;
         z-index: 100 !important;
@@ -1513,6 +1519,8 @@ body {
         overflow: visible !important;
         text-overflow: clip !important;
         white-space: normal !important;
+        position: relative !important;
+        z-index: 10 !important;
     }
     
     .cart-section {
