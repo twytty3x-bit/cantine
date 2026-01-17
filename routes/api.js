@@ -988,14 +988,25 @@ router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 // Importer des données (admin seulement)
-router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file'), async (req, res) => {
+router.post('/import', authMiddleware, adminMiddleware, (req, res, next) => {
+    // Middleware pour gérer les erreurs multer
+    uploadZip.single('file')(req, res, (err) => {
+        if (err) {
+            // Si c'est une erreur multer, retourner JSON
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({ message: `Erreur d'upload: ${err.message}` });
+            }
+            // Si c'est une erreur de validation
+            if (err.message) {
+                return res.status(400).json({ message: err.message });
+            }
+            return res.status(400).json({ message: 'Erreur lors de l\'upload du fichier' });
+        }
+        next();
+    });
+}, async (req, res) => {
     let zipFile = null;
     let extractedDir = null;
-    
-    // Gérer les erreurs de multer
-    if (req.fileValidationError) {
-        return res.status(400).json({ message: req.fileValidationError });
-    }
     
     try {
         let data;

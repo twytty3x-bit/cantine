@@ -38,13 +38,32 @@ app.use(express.static('public'));
 // Ne pas parser multipart/form-data (géré par multer)
 app.use((req, res, next) => {
     const contentType = req.headers['content-type'] || '';
+    // Si c'est multipart/form-data, passer au suivant sans parser
     if (contentType.includes('multipart/form-data')) {
         return next();
     }
+    // Sinon, continuer normalement
     next();
 });
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Appliquer les middlewares de parsing seulement si ce n'est pas multipart/form-data
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (!contentType.includes('multipart/form-data')) {
+        express.json({ limit: '10mb' })(req, res, next);
+    } else {
+        next();
+    }
+});
+
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (!contentType.includes('multipart/form-data')) {
+        express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    } else {
+        next();
+    }
+});
 
 // Headers de sécurité
 app.use((req, res, next) => {
@@ -205,7 +224,27 @@ app.use('/admin', authMiddleware, adminRouter);
 
 // Gestion des erreurs 404
 app.use((req, res, next) => {
+    // Si c'est une route API, retourner JSON
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ message: 'Route API non trouvée' });
+    }
     res.status(404).send('Page non trouvée');
+});
+
+// Gestion globale des erreurs (doit être après toutes les routes)
+app.use((err, req, res, next) => {
+    console.error('Erreur globale:', err);
+    
+    // Si c'est une route API, retourner JSON
+    if (req.path.startsWith('/api')) {
+        return res.status(err.status || 500).json({ 
+            message: err.message || 'Erreur serveur',
+            error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
+    }
+    
+    // Sinon, retourner une page d'erreur HTML
+    res.status(err.status || 500).send('Erreur serveur');
 });
 
 // Gestion globale des erreurs
