@@ -1055,20 +1055,57 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
             const imagesDir = path.join(extractedDir, 'images');
             const targetImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
             
+            console.log('=== COPYING IMAGES ===');
+            console.log('Images directory:', imagesDir);
+            console.log('Target directory:', targetImagesDir);
+            console.log('Images dir exists:', fs.existsSync(imagesDir));
+            
             if (fs.existsSync(imagesDir)) {
                 // S'assurer que le répertoire de destination existe
                 if (!fs.existsSync(targetImagesDir)) {
                     fs.mkdirSync(targetImagesDir, { recursive: true });
+                    console.log('Created target directory:', targetImagesDir);
                 }
                 
                 // Copier tous les fichiers d'images
                 const imageFiles = fs.readdirSync(imagesDir);
+                console.log('Image files found:', imageFiles.length, imageFiles);
+                
                 for (const imageFile of imageFiles) {
                     const sourcePath = path.join(imagesDir, imageFile);
                     const targetPath = path.join(targetImagesDir, imageFile);
-                    fs.copyFileSync(sourcePath, targetPath);
-                    results.images.copied++;
+                    
+                    // Vérifier que le fichier source existe
+                    if (fs.existsSync(sourcePath)) {
+                        try {
+                            // Vérifier les stats du fichier source
+                            const stats = fs.statSync(sourcePath);
+                            console.log(`Copying ${imageFile} (${stats.size} bytes)`);
+                            
+                            // Copier le fichier (écraser si existe déjà)
+                            fs.copyFileSync(sourcePath, targetPath);
+                            
+                            // Vérifier que le fichier a bien été copié
+                            if (fs.existsSync(targetPath)) {
+                                const targetStats = fs.statSync(targetPath);
+                                console.log(`✓ Copied: ${imageFile} (${targetStats.size} bytes)`);
+                                results.images.copied++;
+                            } else {
+                                console.error(`✗ File not found after copy: ${targetPath}`);
+                                results.images.errors.push({ file: imageFile, error: 'File not found after copy' });
+                            }
+                        } catch (copyError) {
+                            console.error(`✗ Error copying ${imageFile}:`, copyError);
+                            results.images.errors.push({ file: imageFile, error: copyError.message });
+                        }
+                    } else {
+                        console.warn(`✗ Source file does not exist: ${sourcePath}`);
+                        results.images.errors.push({ file: imageFile, error: 'Source file not found' });
+                    }
                 }
+                console.log(`=== Total images copied: ${results.images.copied} / ${imageFiles.length} ===`);
+            } else {
+                console.log('Images directory does not exist:', imagesDir);
             }
         } else {
             // Fallback : utiliser les données du body (compatibilité avec l'ancien format)
@@ -1125,12 +1162,21 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                     delete productData.__v;
                     
                     // S'assurer que le chemin de l'image est correct
-                    if (productData.image && productData.image.startsWith('/uploads/products/')) {
-                        // Le chemin est déjà correct, on le garde tel quel
-                    } else if (productData.image) {
-                        // Si le chemin ne commence pas par /uploads/products/, l'ajuster
+                    if (productData.image) {
+                        // Extraire le nom du fichier du chemin
                         const imageName = path.basename(productData.image);
-                        productData.image = `/uploads/products/${imageName}`;
+                        
+                        // Vérifier que le fichier existe dans le répertoire de destination
+                        const imagePath = path.join(__dirname, '..', 'public', 'uploads', 'products', imageName);
+                        if (fs.existsSync(imagePath)) {
+                            // Le fichier existe, utiliser le chemin correct
+                            productData.image = `/uploads/products/${imageName}`;
+                            console.log(`Image path updated for product ${productData.name}: ${productData.image}`);
+                        } else {
+                            // Le fichier n'existe pas, mais on garde le chemin de toute façon
+                            productData.image = `/uploads/products/${imageName}`;
+                            console.warn(`Image file not found for product ${productData.name}: ${imageName}`);
+                        }
                     }
                     
                     if (overwrite) {
