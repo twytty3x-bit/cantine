@@ -1060,6 +1060,9 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
             console.log('Target directory:', targetImagesDir);
             console.log('Images dir exists:', fs.existsSync(imagesDir));
             
+            // Créer un Map pour stocker les correspondances entre les noms de fichiers
+            const imageMap = new Map();
+            
             if (fs.existsSync(imagesDir)) {
                 // S'assurer que le répertoire de destination existe
                 if (!fs.existsSync(targetImagesDir)) {
@@ -1089,6 +1092,10 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                             if (fs.existsSync(targetPath)) {
                                 const targetStats = fs.statSync(targetPath);
                                 console.log(`✓ Copied: ${imageFile} (${targetStats.size} bytes)`);
+                                
+                                // Stocker dans le Map pour référence ultérieure
+                                imageMap.set(imageFile.toLowerCase(), imageFile);
+                                
                                 results.images.copied++;
                             } else {
                                 console.error(`✗ File not found after copy: ${targetPath}`);
@@ -1104,9 +1111,13 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                     }
                 }
                 console.log(`=== Total images copied: ${results.images.copied} / ${imageFiles.length} ===`);
+                console.log('Image map:', Array.from(imageMap.entries()));
             } else {
                 console.log('Images directory does not exist:', imagesDir);
             }
+            
+            // Stocker le imageMap dans req pour l'utiliser lors de l'import des produits
+            req.importedImages = imageMap;
         } else {
             // Fallback : utiliser les données du body (compatibilité avec l'ancien format)
             data = req.body.data;
@@ -1163,19 +1174,35 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                     
                     // S'assurer que le chemin de l'image est correct
                     if (productData.image) {
-                        // Extraire le nom du fichier du chemin
-                        const imageName = path.basename(productData.image);
+                        // Extraire le nom du fichier du chemin (peut être /uploads/products/filename.jpg ou juste filename.jpg)
+                        let imageName = path.basename(productData.image);
+                        
+                        // Si le chemin contient /uploads/products/, extraire juste le nom
+                        if (productData.image.includes('/uploads/products/')) {
+                            imageName = productData.image.replace(/^.*\/uploads\/products\//, '');
+                        }
+                        
+                        // Si on a un Map d'images importées, vérifier la correspondance (insensible à la casse)
+                        if (req.importedImages && req.importedImages.size > 0) {
+                            const foundImage = req.importedImages.get(imageName.toLowerCase());
+                            if (foundImage) {
+                                // Utiliser le nom exact du fichier copié
+                                imageName = foundImage;
+                                console.log(`Matched image for product ${productData.name}: ${imageName}`);
+                            }
+                        }
                         
                         // Vérifier que le fichier existe dans le répertoire de destination
                         const imagePath = path.join(__dirname, '..', 'public', 'uploads', 'products', imageName);
                         if (fs.existsSync(imagePath)) {
                             // Le fichier existe, utiliser le chemin correct
                             productData.image = `/uploads/products/${imageName}`;
-                            console.log(`Image path updated for product ${productData.name}: ${productData.image}`);
+                            console.log(`✓ Image path updated for product ${productData.name}: ${productData.image}`);
                         } else {
-                            // Le fichier n'existe pas, mais on garde le chemin de toute façon
+                            // Le fichier n'existe pas
+                            console.warn(`✗ Image file not found for product ${productData.name}: ${imageName} (searched: ${imagePath})`);
+                            // Garder le chemin quand même, peut-être que l'image sera ajoutée plus tard
                             productData.image = `/uploads/products/${imageName}`;
-                            console.warn(`Image file not found for product ${productData.name}: ${imageName}`);
                         }
                     }
                     
