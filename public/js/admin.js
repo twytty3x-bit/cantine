@@ -1403,20 +1403,38 @@ async function exportData() {
             throw new Error('Erreur lors de l\'export');
         }
         
+        // Détecter le type de fichier depuis le Content-Type
+        const contentType = response.headers.get('content-type') || '';
+        const isZip = contentType.includes('application/zip') || contentType.includes('application/x-zip-compressed');
+        
+        // Récupérer le nom de fichier depuis Content-Disposition si disponible
+        const contentDisposition = response.headers.get('content-disposition') || '';
+        let filename = null;
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        // Si pas de nom de fichier dans les headers, en créer un
+        if (!filename) {
+            const selectedOptions = [];
+            if (exportProducts) selectedOptions.push('produits');
+            if (exportCategories) selectedOptions.push('categories');
+            if (exportCoupons) selectedOptions.push('coupons');
+            if (exportUsers) selectedOptions.push('users');
+            if (exportSales) selectedOptions.push('ventes');
+            
+            const extension = isZip ? 'zip' : 'json';
+            filename = `cantine-export-${selectedOptions.join('-')}-${new Date().toISOString().split('T')[0]}.${extension}`;
+        }
+        
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        
-        // Créer un nom de fichier descriptif
-        const selectedOptions = [];
-        if (exportProducts) selectedOptions.push('produits');
-        if (exportCategories) selectedOptions.push('categories');
-        if (exportCoupons) selectedOptions.push('coupons');
-        if (exportUsers) selectedOptions.push('users');
-        if (exportSales) selectedOptions.push('ventes');
-        
-        link.download = `cantine-export-${selectedOptions.join('-')}-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
