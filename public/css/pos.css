@@ -1017,12 +1017,34 @@ body {
         height: 300px !important;
         min-height: 300px !important;
         max-height: 300px !important;
-        padding: var(--spacing-sm) !important;
+        padding: 12px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: visible !important;
         justify-content: space-between !important;
         box-sizing: border-box !important;
+        position: relative !important;
+    }
+    
+    /* Forcer l'ordre d'affichage des éléments dans les tuiles */
+    .product-tile .product-image {
+        order: 1 !important;
+    }
+    
+    .product-tile .product-name {
+        order: 2 !important;
+    }
+    
+    .product-tile .product-price {
+        order: 3 !important;
+        flex: 0 0 auto !important;
+        margin: 8px 0 4px 0 !important;
+    }
+    
+    .product-tile .product-stock {
+        order: 4 !important;
+        flex: 0 0 auto !important;
+        margin-top: 0 !important;
     }
     
     .product-image {
@@ -1065,21 +1087,21 @@ body {
     }
     
     .product-price {
-        font-size: 1rem !important;
-        margin: var(--spacing-xs) 0 !important;
-        padding: 4px var(--spacing-xs) !important;
+        font-size: 1.125rem !important;
+        margin: 6px 0 !important;
+        padding: 4px 8px !important;
         flex-shrink: 0 !important;
         visibility: visible !important;
         opacity: 1 !important;
         height: auto !important;
-        min-height: 1.5em !important;
+        min-height: 24px !important;
         max-height: none !important;
         display: block !important;
         position: relative !important;
-        z-index: 10 !important;
+        z-index: 100 !important;
         color: #2563eb !important;
         font-weight: 700 !important;
-        line-height: 1.4 !important;
+        line-height: 1.5 !important;
         overflow: visible !important;
         text-overflow: clip !important;
         white-space: normal !important;
@@ -1087,6 +1109,10 @@ body {
         border: none !important;
         width: 100% !important;
         text-align: center !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        clip: auto !important;
+        clip-path: none !important;
     }
     
     .product-stock {
@@ -1120,9 +1146,25 @@ body {
         overflow: visible !important;
     }
     
+    /* Forcer l'affichage du prix avec un style très visible */
     .product-tile .product-price {
-        z-index: 10 !important;
+        z-index: 100 !important;
         position: relative !important;
+        order: 3 !important;
+        flex: 0 0 auto !important;
+        margin: 8px 0 4px 0 !important;
+        padding: 6px 8px !important;
+        font-size: 1.125rem !important;
+        color: #2563eb !important;
+        font-weight: 700 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        min-height: 28px !important;
+        text-align: center !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 4px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }
     
     .cart-section {
