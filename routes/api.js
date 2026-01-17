@@ -1207,35 +1207,52 @@ router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file')
                         }
                         
                         // Vérifier que le fichier existe dans le répertoire de destination
-                        const imagePath = path.join(__dirname, '..', 'public', 'uploads', 'products', imageName);
+                        const targetImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+                        const imagePath = path.join(targetImagesDir, imageName);
+                        
                         if (fs.existsSync(imagePath)) {
                             // Le fichier existe, utiliser le chemin correct
                             productData.image = `/uploads/products/${imageName}`;
                             console.log(`✓ Image path updated for product ${productData.name}: ${productData.image}`);
-                            
-                            // Vérifier que le fichier est accessible (permissions)
-                            try {
-                                const stats = fs.statSync(imagePath);
-                                // Vérifier les permissions
-                                fs.accessSync(imagePath, fs.constants.R_OK);
-                                console.log(`  ✓ File accessible: ${stats.size} bytes`);
-                            } catch (statError) {
-                                console.warn(`  ✗ Warning: File not accessible: ${statError.message}`);
-                            }
                         } else {
-                            // Le fichier n'existe pas - essayer de trouver avec différentes casses
-                            const targetImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+                            // Le fichier n'existe pas - chercher dans tous les fichiers disponibles
                             if (fs.existsSync(targetImagesDir)) {
                                 const allFiles = fs.readdirSync(targetImagesDir);
-                                const foundFile = allFiles.find(f => f.toLowerCase() === imageName.toLowerCase());
+                                
+                                // Essayer de trouver le fichier avec correspondance insensible à la casse
+                                const foundFile = allFiles.find(f => {
+                                    // Correspondance exacte (insensible à la casse)
+                                    if (f.toLowerCase() === imageName.toLowerCase()) {
+                                        return true;
+                                    }
+                                    // Correspondance par nom sans extension
+                                    const fName = path.parse(f).name.toLowerCase();
+                                    const imgName = path.parse(imageName).name.toLowerCase();
+                                    return fName === imgName;
+                                });
+                                
                                 if (foundFile) {
                                     imageName = foundFile;
                                     productData.image = `/uploads/products/${imageName}`;
-                                    console.log(`✓ Found image with different case for product ${productData.name}: ${productData.image}`);
+                                    console.log(`✓ Found image with different case/extension for product ${productData.name}: ${productData.image}`);
                                 } else {
-                                    console.warn(`✗ Image file not found for product ${productData.name}: ${imageName} (searched: ${imagePath})`);
-                                    console.warn(`  Available files: ${allFiles.slice(0, 5).join(', ')}...`);
-                                    productData.image = `/uploads/products/${imageName}`;
+                                    console.warn(`✗ Image file not found for product ${productData.name}`);
+                                    console.warn(`  Searched for: ${imageName}`);
+                                    console.warn(`  Original path in data: ${productData.image}`);
+                                    console.warn(`  Available files (first 10): ${allFiles.slice(0, 10).join(', ')}`);
+                                    
+                                    // Essayer de trouver par nom de base (sans extension)
+                                    const baseName = path.parse(imageName).name.toLowerCase();
+                                    const foundByBase = allFiles.find(f => path.parse(f).name.toLowerCase() === baseName);
+                                    if (foundByBase) {
+                                        imageName = foundByBase;
+                                        productData.image = `/uploads/products/${imageName}`;
+                                        console.log(`✓ Found image by base name for product ${productData.name}: ${productData.image}`);
+                                    } else {
+                                        // Garder le chemin original, peut-être que l'image sera ajoutée plus tard
+                                        productData.image = `/uploads/products/${imageName}`;
+                                        console.warn(`  Keeping original path: ${productData.image}`);
+                                    }
                                 }
                             } else {
                                 console.error(`✗ Target images directory does not exist: ${targetImagesDir}`);
