@@ -60,11 +60,15 @@ const zipStorage = multer.diskStorage({
 const uploadZip = multer({
     storage: zipStorage,
     fileFilter: function (req, file, cb) {
-        if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || 
-            file.originalname.endsWith('.zip')) {
+        // Accepter les fichiers ZIP et JSON (pour compatibilité)
+        if (file.mimetype === 'application/zip' || 
+            file.mimetype === 'application/x-zip-compressed' || 
+            file.mimetype === 'application/json' ||
+            file.originalname.endsWith('.zip') ||
+            file.originalname.endsWith('.json')) {
             return cb(null, true);
         }
-        cb(new Error('Seuls les fichiers ZIP sont autorisés pour l\'import!'));
+        cb(new Error('Seuls les fichiers ZIP ou JSON sont autorisés pour l\'import!'));
     },
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB max
 });
@@ -987,6 +991,11 @@ router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
 router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file'), async (req, res) => {
     let zipFile = null;
     let extractedDir = null;
+    
+    // Gérer les erreurs de multer
+    if (req.fileValidationError) {
+        return res.status(400).json({ message: req.fileValidationError });
+    }
     
     try {
         let data;

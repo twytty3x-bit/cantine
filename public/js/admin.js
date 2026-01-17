@@ -1485,6 +1485,13 @@ async function importData() {
             body: formData
         });
         
+        // Vérifier le type de contenu avant de parser
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Erreur serveur: ${text.substring(0, 200)}`);
+        }
+        
         const result = await response.json();
         
         if (!response.ok) {

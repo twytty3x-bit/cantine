@@ -35,6 +35,14 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 // Limiter la taille des requêtes pour prévenir les attaques
+// Ne pas parser multipart/form-data (géré par multer)
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('multipart/form-data')) {
+        return next();
+    }
+    next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
