@@ -269,7 +269,13 @@ async function setupCategories() {
         const categories = await response.json();
         
         const categoriesBar = document.querySelector('.categories-bar');
-        categoriesBar.innerHTML = ''; // Vider la barre de catégories
+        
+        // Sauvegarder le bouton "Moitié-Moitié" s'il existe
+        const ticketSaleBtn = categoriesBar.querySelector('.ticket-sale-btn');
+        
+        // Vider la barre de catégories (mais préserver le bouton Moitié-Moitié)
+        const existingButtons = categoriesBar.querySelectorAll('.category-btn');
+        existingButtons.forEach(btn => btn.remove());
         
         // S'assurer que le bouton "Tous" est toujours présent
         const allButton = document.createElement('button');
@@ -288,6 +294,11 @@ async function setupCategories() {
                 categoriesBar.appendChild(button);
             }
         });
+        
+        // Réajouter le bouton "Moitié-Moitié" s'il existait
+        if (ticketSaleBtn) {
+            categoriesBar.appendChild(ticketSaleBtn);
+        }
 
         // Gérer les clics sur les boutons de catégorie
         categoriesBar.addEventListener('click', (e) => {
