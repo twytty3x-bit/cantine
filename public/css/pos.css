@@ -38,10 +38,11 @@
     bottom: 20px;
     right: 20px;
     display: flex;
+    flex-direction: row; /* Alignement horizontal normal */
     align-items: center;
+    justify-content: flex-end; /* Aligner à droite */
     gap: 15px;
     z-index: 1002; /* Au-dessus du panier et du header */
-    flex-direction: row-reverse; /* Admin à droite, Déconnexion à gauche */
 }
 
 /* Sur iPad et petits écrans, positionner les boutons au-dessus du panier */
@@ -59,7 +60,7 @@
 }
 
 .logout-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
@@ -71,6 +72,11 @@
     font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
+    width: auto;
+    height: auto;
 }
 
 .logout-btn:hover {
@@ -587,7 +593,7 @@
 
 /* Bouton Admin */
 .admin-link {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
@@ -600,6 +606,11 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     z-index: 900;
+    position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
+    width: auto;
+    height: auto;
 }
 
 .admin-link:hover {
