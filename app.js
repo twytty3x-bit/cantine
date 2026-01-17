@@ -32,7 +32,26 @@ mongoose.connection.on('disconnected', () => {
 
 // Configuration du middleware
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
+
+// Configuration des fichiers statiques avec gestion du cache
+app.use(express.static('public', {
+    // Pour les images, utiliser un cache long mais avec ETag pour la validation
+    maxAge: '1y',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+        // Pour les images, ajouter des headers de cache appropriés
+        if (path.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+            // Cache long pour les images (1 an)
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            // Mais permettre la validation avec ETag
+            res.setHeader('ETag', true);
+        } else {
+            // Pour les autres fichiers, cache plus court
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
+    }
+}));
 
 // Limiter la taille des requêtes pour prévenir les attaques
 // IMPORTANT: Ne PAS parser multipart/form-data car multer doit gérer le stream brut

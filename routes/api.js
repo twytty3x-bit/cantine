@@ -79,10 +79,16 @@ router.get('/products', async (req, res) => {
         console.log('Récupération des produits...'); // Log pour déboguer
         const products = await Product.find().lean();
         
-        // Trier les prix par quantité pour chaque produit
+        // Trier les prix par quantité pour chaque produit et ajouter un timestamp pour le cache
         products.forEach(product => {
             if (product.quantityPrices) {
                 product.quantityPrices.sort((a, b) => b.quantity - a.quantity);
+            }
+            
+            // Ajouter un paramètre de version basé sur la date de mise à jour pour forcer le rechargement
+            if (product.image) {
+                const timestamp = product.updatedAt ? new Date(product.updatedAt).getTime() : Date.now();
+                product.imageUrl = `${product.image}?v=${timestamp}`;
             }
         });
         

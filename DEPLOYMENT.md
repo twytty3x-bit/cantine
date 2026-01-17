@@ -330,6 +330,19 @@ server {
     # Redirection vers HTTPS (après configuration SSL)
     # return 301 https://$server_name$request_uri;
 
+    # Servir directement les fichiers statiques (images) pour de meilleures performances
+    # et éviter les problèmes de cache
+    location /uploads/ {
+        alias /var/www/cantine/public/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header ETag on;
+        access_log off;
+        
+        # Permettre la validation du cache avec If-None-Match
+        if_modified_since exact;
+    }
+
     # Pour le moment, proxy vers l'application
     location / {
         proxy_pass http://localhost:3000;
@@ -341,6 +354,11 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+        
+        # Désactiver le cache pour les pages HTML pour éviter les problèmes
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
     }
 
     # Augmenter la taille maximale des fichiers uploadés
@@ -354,6 +372,33 @@ server {
 sudo ln -s /etc/nginx/sites-available/cantine /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
+```
+
+### 7.3 Configuration du cache des images (Important pour éviter les problèmes de cache)
+
+La configuration Nginx ci-dessus sert directement les fichiers statiques depuis `/var/www/cantine/public/uploads/` pour de meilleures performances. Les images sont mises en cache pendant 1 an avec validation ETag, ce qui permet au navigateur de vérifier si l'image a changé sans la recharger complètement.
+
+**Si vous avez des problèmes de cache après un import d'images :**
+
+1. **Vider le cache du navigateur :**
+   - Chrome/Edge : `Ctrl+Shift+Delete` (Windows) ou `Cmd+Shift+Delete` (Mac)
+   - Firefox : `Ctrl+Shift+Delete` (Windows) ou `Cmd+Shift+Delete` (Mac)
+   - Safari : `Cmd+Option+E` (Mac)
+
+2. **Forcer le rechargement :**
+   - Chrome/Edge : `Ctrl+F5` (Windows) ou `Cmd+Shift+R` (Mac)
+   - Firefox : `Ctrl+F5` (Windows) ou `Cmd+Shift+R` (Mac)
+   - Safari : `Cmd+Option+R` (Mac)
+
+3. **Vérifier que les permissions sont correctes :**
+```bash
+sudo chown -R ubuntu:ubuntu /var/www/cantine/public/uploads/
+sudo chmod -R 755 /var/www/cantine/public/uploads/
+```
+
+4. **Redémarrer Nginx :**
+```bash
+sudo systemctl restart nginx
 ```
 
 ## Étape 8 : Configuration SSL avec Let's Encrypt (Optionnel mais recommandé)

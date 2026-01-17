@@ -340,7 +340,7 @@ async function loadProducts(category = 'all') {
             tile.className = `product-tile ${product.stock <= 0 ? 'out-of-stock' : ''}`;
             tile.innerHTML = `
                 <div class="product-image">
-                    <img src="${product.image}" alt="${product.name}">
+                    <img src="${product.imageUrl || product.image}" alt="${product.name}" onerror="this.src='/uploads/products/default.jpg'">
                 </div>
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">${product.price.toFixed(2)}$</div>
@@ -382,7 +382,7 @@ function displayProducts(category) {
         tile.className = `product-tile ${product.stock <= 0 ? 'out-of-stock' : ''}`;
         tile.innerHTML = `
             <div class="product-image">
-                <img src="${product.image}" alt="${product.name}">
+                <img src="${product.imageUrl || product.image}" alt="${product.name}" onerror="this.src='/uploads/products/default.jpg'">
             </div>
             <div class="product-name">${product.name}</div>
             <div class="product-price">${product.price.toFixed(2)}$</div>
@@ -528,7 +528,7 @@ function updateCart() {
             itemElement.className = 'cart-item';
             itemElement.innerHTML = `
                 <div class="mini-image">
-                    <img src="${item.product.image || '/images/default-product.png'}" alt="">
+                    <img src="${(item.product.imageUrl || item.product.image || '/images/default-product.png')}" alt="" onerror="this.src='/images/default-product.png'">
                 </div>
                 <div class="cart-item-details">
                     <span class="item-name">${item.product.name}</span>
@@ -1175,7 +1175,7 @@ function displayProducts(products) {
         const productElement = document.createElement('div');
         productElement.className = 'product-card';
         productElement.innerHTML = `
-            <img src="${product.image || '/images/default-product.png'}" alt="${product.name}">
+            <img src="${(product.imageUrl || product.image || '/images/default-product.png')}" alt="${product.name}" onerror="this.src='/images/default-product.png'">
             <h3>${product.name}</h3>
             <p class="price">${product.price.toFixed(2)}$</p>
             ${showQuantityPrices(product)}

@@ -42,7 +42,7 @@ async function loadInventory() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="product-image-cell">
-                    <img src="${product.image || '/images/default-product.png'}" alt="${product.name}">
+                    <img src="${(product.imageUrl || product.image || '/images/default-product.png')}" alt="${product.name}" onerror="this.src='/images/default-product.png'">
                 </td>
                 <td>${product.name}</td>
                 <td>${product.category}</td>
