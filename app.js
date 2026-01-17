@@ -46,8 +46,19 @@ app.use(express.static('public', {
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
             // Mais permettre la validation avec ETag
             res.setHeader('ETag', true);
+        } else if (path.match(/\.(css|js)$/i)) {
+            // Pour les fichiers CSS et JS, cache très court en développement, plus long en production
+            if (process.env.NODE_ENV === 'development') {
+                // Pas de cache en développement pour voir les changements immédiatement
+                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+            } else {
+                // Cache court en production (5 minutes) pour permettre les mises à jour
+                res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+            }
         } else {
-            // Pour les autres fichiers, cache plus court
+            // Pour les autres fichiers, cache court
             res.setHeader('Cache-Control', 'public, max-age=3600');
         }
     }

@@ -6,24 +6,13 @@
     <title>Cantine - POS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/pos.css">
+    <link rel="stylesheet" href="/css/style.css?v=<%= new Date().getTime() %>">
+    <link rel="stylesheet" href="/css/pos.css?v=<%= new Date().getTime() %>">
 </head>
 <body>
     <div class="pos-container">
         <div class="pos-header">
-            <div class="header-actions">
-                <% if (user && user.role === 'admin') { %>
-                <a href="/admin" class="admin-link">
-                    <i class="fas fa-cog"></i>
-                    <span class="admin-text">Admin</span>
-                </a>
-                <% } %>
-                <button id="logout-btn" class="logout-btn" title="Déconnexion" onclick="handleLogout(event)">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span class="logout-text">Déconnexion</span>
-                </button>
-            </div>
+            <!-- Header vide, les boutons sont maintenant en bas -->
         </div>
 
         <!-- Section gauche : Produits -->
@@ -98,6 +87,20 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Boutons d'action en bas à droite -->
+        <div class="bottom-actions">
+            <% if (user && user.role === 'admin') { %>
+            <a href="/admin" class="admin-link">
+                <i class="fas fa-cog"></i>
+                <span class="admin-text">Admin</span>
+            </a>
+            <% } %>
+            <button id="logout-btn" class="logout-btn" title="Déconnexion" onclick="handleLogout(event)">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="logout-text">Déconnexion</span>
+            </button>
+        </div>
     </div>
 
     <!-- Modal pour la vente de coupons -->
@@ -142,6 +145,6 @@
         </div>
     </div>
 
-    <script src="/js/pos.js"></script>
+    <script src="/js/pos.js?v=<%= new Date().getTime() %>"></script>
 </body>
 </html> 

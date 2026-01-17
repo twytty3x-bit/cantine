@@ -6,8 +6,8 @@
     <title>Vente de Tickets - Moitié-Moitié</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/tickets-seller.css">
+    <link rel="stylesheet" href="/css/style.css?v=<%= new Date().getTime() %>">
+    <link rel="stylesheet" href="/css/tickets-seller.css?v=<%= new Date().getTime() %>">
 </head>
 <body>
     <div class="tickets-seller-container">
@@ -106,6 +106,6 @@
         </div>
     </div>
 
-    <script src="/js/tickets-seller.js"></script>
+    <script src="/js/tickets-seller.js?v=<%= new Date().getTime() %>"></script>
 </body>
 </html>
