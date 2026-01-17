@@ -36,24 +36,69 @@ sudo ufw enable
 
 ### 2.1 Installation de Node.js 20.x (LTS recommandé pour Ubuntu 24.04)
 
+**Méthode recommandée : NodeSource (inclut npm)**
+
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-**Alternative : Installation via le dépôt Ubuntu (Node.js 18.x)**
+**⚠️ Important :** Node.js de NodeSource inclut déjà npm. Ne pas installer le package `npm` séparément, cela causera un conflit.
+
+**Alternative : Installation via le dépôt Ubuntu (si NodeSource ne fonctionne pas)**
+
 ```bash
+# Désinstaller Node.js de NodeSource si déjà installé
+sudo apt remove -y nodejs npm
+sudo apt autoremove -y
+
+# Installer depuis le dépôt Ubuntu
+sudo apt update
 sudo apt install -y nodejs npm
 ```
 
-### 2.2 Vérification de l'installation
+### 2.2 Résolution des conflits npm (si vous avez déjà installé Node.js)
+
+**Si vous obtenez une erreur de conflit entre nodejs et npm :**
+
+```bash
+# Vérifier la version de Node.js installée
+node --version
+
+# Vérifier si npm est disponible
+npm --version
+
+# Si npm fonctionne, pas besoin de faire quoi que ce soit
+# Si npm n'est pas disponible, réinstaller Node.js proprement :
+sudo apt remove -y nodejs npm
+sudo apt autoremove -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+**Node.js de NodeSource inclut npm automatiquement.** Vous n'avez pas besoin d'installer npm séparément.
+
+### 2.3 Vérification de l'installation
 
 ```bash
 node --version
 npm --version
 ```
 
-### 2.3 Installation de PM2 (gestionnaire de processus)
+Les deux commandes devraient fonctionner. Si npm n'est pas disponible :
+
+```bash
+# Vérifier où npm devrait être
+which npm
+ls -la /usr/bin/npm
+
+# Si npm n'existe pas, réinstaller Node.js
+sudo apt remove -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 2.4 Installation de PM2 (gestionnaire de processus)
 
 ```bash
 sudo npm install -g pm2
@@ -63,15 +108,17 @@ sudo npm install -g pm2
 
 ### 3.1 Installation de MongoDB 7.0 (Ubuntu 24.04)
 
+**⚠️ Note importante :** MongoDB 7.0 peut ne pas être disponible directement pour Ubuntu 24.04. Nous utiliserons Ubuntu 22.04 (jammy) qui est compatible.
+
 ```bash
 # Installer les dépendances nécessaires
-sudo apt install -y wget curl gnupg
+sudo apt install -y wget curl gnupg ca-certificates
 
 # Importer la clé GPG MongoDB
-wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
+curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
 
-# Ajouter le dépôt MongoDB pour Ubuntu 24.04 (Noble)
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+# Ajouter le dépôt MongoDB (utiliser jammy qui est compatible avec noble)
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
 # Mettre à jour et installer
 sudo apt update
@@ -82,7 +129,31 @@ sudo systemctl start mongod
 sudo systemctl enable mongod
 ```
 
-**Note :** Ubuntu 24.04 utilise le nom de code "noble" au lieu de "jammy" (22.04).
+**Alternative : Installation de MongoDB 6.0 (si 7.0 ne fonctionne pas)**
+
+Si la méthode ci-dessus ne fonctionne pas, utilisez MongoDB 6.0 :
+
+```bash
+# Nettoyer les tentatives précédentes
+sudo rm -f /etc/apt/sources.list.d/mongodb-org-*.list
+sudo rm -f /usr/share/keyrings/mongodb-server-*.gpg
+
+# Importer la clé GPG MongoDB 6.0
+curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
+
+# Ajouter le dépôt MongoDB 6.0
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+# Mettre à jour et installer
+sudo apt update
+sudo apt install -y mongodb-org
+
+# Démarrer MongoDB
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+
+**Note :** Ubuntu 24.04 (noble) est compatible avec les packages MongoDB pour Ubuntu 22.04 (jammy).
 
 ### 3.2 Vérification de MongoDB
 
@@ -446,6 +517,141 @@ Ajouter :
 
 ## Dépannage
 
+### Problème : Erreur de connexion au serveur
+
+**Vérifications étape par étape :**
+
+1. **Vérifier que l'application fonctionne :**
+```bash
+# Vérifier le statut PM2
+pm2 status
+
+# Voir les logs de l'application
+pm2 logs cantine --lines 50
+
+# Si l'application n'est pas démarrée
+pm2 start ecosystem.config.js
+```
+
+2. **Vérifier que MongoDB fonctionne :**
+```bash
+# Vérifier le statut
+sudo systemctl status mongod
+
+# Si MongoDB ne démarre pas
+sudo systemctl start mongod
+sudo systemctl enable mongod
+
+# Vérifier les logs MongoDB
+sudo journalctl -u mongod -n 50
+```
+
+3. **Vérifier la connexion MongoDB depuis l'application :**
+```bash
+# Tester la connexion MongoDB
+mongosh
+# Dans mongosh, tapez :
+# show dbs
+# exit
+```
+
+4. **Vérifier le fichier .env :**
+```bash
+cd /var/www/cantine
+cat .env
+# Vérifier que MONGODB_URI est correct
+# Vérifier que JWT_SECRET et SESSION_SECRET sont définis
+```
+
+5. **Vérifier que le port 3000 est accessible :**
+```bash
+# Vérifier si l'application écoute sur le port 3000
+sudo netstat -tulpn | grep 3000
+# ou
+sudo ss -tulpn | grep 3000
+
+# Tester localement
+curl http://localhost:3000
+```
+
+6. **Vérifier Nginx :**
+```bash
+# Vérifier la configuration
+sudo nginx -t
+
+# Vérifier le statut
+sudo systemctl status nginx
+
+# Voir les logs d'erreur
+sudo tail -f /var/log/nginx/error.log
+
+# Vérifier que Nginx proxy vers le bon port
+sudo cat /etc/nginx/sites-available/cantine | grep proxy_pass
+```
+
+7. **Vérifier le firewall :**
+```bash
+# Vérifier les règles UFW
+sudo ufw status
+
+# Si nécessaire, autoriser les ports
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+```
+
+8. **Erreurs courantes et solutions :**
+
+**Erreur : "Cannot connect to MongoDB"**
+```bash
+# Vérifier que MongoDB écoute
+sudo netstat -tulpn | grep 27017
+
+# Vérifier la connexion
+mongosh "mongodb://localhost:27017"
+
+# Vérifier MONGODB_URI dans .env
+cat .env | grep MONGODB_URI
+```
+
+**Erreur : "Port 3000 already in use"**
+```bash
+# Trouver le processus qui utilise le port
+sudo lsof -i :3000
+# ou
+sudo fuser -k 3000/tcp
+
+# Redémarrer PM2
+pm2 restart cantine
+```
+
+**Erreur : "JWT_SECRET is not defined"**
+```bash
+# Générer un secret
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Ajouter au .env
+nano .env
+# Ajouter : JWT_SECRET=votre-secret-genere
+
+# Redémarrer l'application
+pm2 restart cantine
+```
+
+**Erreur : "EADDRINUSE" (port déjà utilisé)**
+```bash
+# Changer le port dans .env
+nano .env
+# Modifier PORT=3000 vers PORT=3001
+
+# Mettre à jour Nginx pour pointer vers le nouveau port
+sudo nano /etc/nginx/sites-available/cantine
+# Modifier proxy_pass http://localhost:3001;
+
+# Redémarrer
+pm2 restart cantine
+sudo systemctl reload nginx
+```
+
 ### Problème : L'application ne démarre pas
 
 ```bash
@@ -457,6 +663,9 @@ tail -f logs/err.log
 
 # Vérifier que le port 3000 n'est pas utilisé
 sudo netstat -tulpn | grep 3000
+
+# Vérifier les variables d'environnement
+pm2 env 0
 ```
 
 ### Problème : Nginx ne fonctionne pas
@@ -467,6 +676,9 @@ sudo nginx -t
 
 # Vérifier les logs
 sudo tail -f /var/log/nginx/error.log
+
+# Vérifier les logs d'accès
+sudo tail -f /var/log/nginx/access.log
 ```
 
 ### Problème : MongoDB ne démarre pas
@@ -482,6 +694,9 @@ sudo chown -R mongodb:mongodb /var/lib/mongodb
 
 # Vérifier le statut
 sudo systemctl status mongod
+
+# Redémarrer MongoDB
+sudo systemctl restart mongod
 ```
 
 ### Problème : mongosh non trouvé
@@ -489,6 +704,36 @@ sudo systemctl status mongod
 ```bash
 # Installer mongosh
 sudo apt install -y mongodb-mongosh
+```
+
+### Diagnostic complet rapide
+
+Exécutez cette série de commandes pour un diagnostic complet :
+
+```bash
+echo "=== Statut PM2 ==="
+pm2 status
+
+echo "=== Statut MongoDB ==="
+sudo systemctl status mongod --no-pager
+
+echo "=== Statut Nginx ==="
+sudo systemctl status nginx --no-pager
+
+echo "=== Ports ouverts ==="
+sudo netstat -tulpn | grep -E '3000|27017|80|443'
+
+echo "=== Dernières erreurs PM2 ==="
+pm2 logs cantine --lines 20 --err
+
+echo "=== Vérification .env ==="
+cd /var/www/cantine
+if [ -f .env ]; then
+    echo "Fichier .env existe"
+    grep -E "MONGODB_URI|JWT_SECRET|SESSION_SECRET|PORT" .env | sed 's/=.*/=***/'
+else
+    echo "ERREUR: Fichier .env manquant!"
+fi
 ```
 
 ## Sécurité supplémentaire
