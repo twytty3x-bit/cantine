@@ -72,8 +72,8 @@ body {
    ============================================ */
 .bottom-actions {
     position: fixed;
-    bottom: var(--spacing-lg);
-    right: var(--spacing-lg);
+    top: var(--spacing-md);
+    right: calc(420px + var(--spacing-md));
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -153,6 +153,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     display: flex;
+    align-items: center;
     gap: var(--spacing-sm);
     overflow-x: auto;
     overflow-y: hidden;
@@ -203,38 +204,40 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
-/* Section bouton Moitié-Moitié */
-.tickets-sale-section {
-    margin-bottom: 0;
-    flex-shrink: 0;
-}
-
+/* Bouton Moitié-Moitié dans la barre des catégories */
 .ticket-sale-btn {
-    width: 100%;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
     color: white;
     border: none;
-    border-radius: var(--radius-md);
-    font-size: 1rem;
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
-    box-shadow: var(--shadow-md);
-    min-height: 48px;
+    gap: var(--spacing-xs);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 36px;
+    margin-left: auto;
 }
 
 .ticket-sale-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, #ee5a6f, #ff6b6b);
 }
 
 .ticket-sale-btn:active {
     transform: translateY(0);
+}
+
+.ticket-sale-btn i {
+    font-size: 0.875rem;
 }
 
 /* Grille des produits */
@@ -359,9 +362,9 @@ body {
 .cart-section {
     position: fixed;
     right: 0;
-    top: 64px;
+    top: 0;
     width: 420px;
-    height: calc(100vh - 64px);
+    height: 100vh;
     background: var(--bg-white);
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -901,7 +904,8 @@ body {
     }
     
     .bottom-actions {
-        bottom: var(--spacing-md);
+        top: var(--spacing-md);
+        right: calc(400px + var(--spacing-md));
     }
 }
 
@@ -1014,7 +1018,7 @@ body {
     }
     
     .bottom-actions {
-        bottom: calc(50vh + 120px);
+        top: var(--spacing-md);
         right: var(--spacing-lg);
         gap: var(--spacing-md);
     }
@@ -1091,7 +1095,8 @@ body {
     }
     
     .bottom-actions {
-        bottom: calc(50vh + 100px);
+        top: var(--spacing-md);
+        right: var(--spacing-md);
     }
 }
 
@@ -1157,7 +1162,7 @@ body {
     }
     
     .bottom-actions {
-        bottom: calc(50vh + 120px);
+        top: var(--spacing-md);
         right: var(--spacing-md);
         gap: var(--spacing-md);
     }
@@ -1273,7 +1278,7 @@ body {
     }
     
     .bottom-actions {
-        bottom: calc(55vh + 120px);
+        top: var(--spacing-sm);
         right: var(--spacing-sm);
         gap: var(--spacing-sm);
     }
