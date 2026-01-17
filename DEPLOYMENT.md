@@ -382,7 +382,101 @@ sudo certbot renew --dry-run
 
 ## Étape 9 : Configuration MongoDB (Sécurité)
 
-### 9.1 Activer l'authentification MongoDB (recommandé)
+### 9.0 Configuration MongoDB par défaut (sans authentification)
+
+**Pour un déploiement initial, MongoDB fonctionne sans authentification par défaut.** C'est la configuration la plus simple et recommandée pour commencer.
+
+**Vérifier que l'authentification est désactivée :**
+
+```bash
+sudo cat /etc/mongod.conf | grep -A 2 security
+```
+
+Si vous voyez `authorization: enabled`, commentez cette section :
+
+```bash
+sudo nano /etc/mongod.conf
+```
+
+Assurez-vous que la section security est commentée ou absente :
+```yaml
+# security:
+#   authorization: enabled
+```
+
+Redémarrer MongoDB :
+```bash
+sudo systemctl restart mongod
+```
+
+**Configuration du .env (sans authentification) :**
+```env
+MONGODB_URI=mongodb://localhost:27017/cantine
+```
+
+**⚠️ IMPORTANT : Si vous obtenez "Authentication failed" :**
+
+Cela signifie que votre `.env` contient des identifiants (user:password@) alors que l'authentification est désactivée. 
+
+**Solution :**
+
+```bash
+cd /var/www/cantine
+nano .env
+```
+
+**Assurez-vous que MONGODB_URI est exactement :**
+```env
+MONGODB_URI=mongodb://localhost:27017/cantine
+```
+
+**PAS de `user:password@` dans l'URI !**
+
+Puis redémarrer :
+```bash
+pm2 restart cantine
+pm2 logs cantine --lines 20
+```
+
+### 9.1 Résolution de l'erreur "not authorized" ou "requires authentication"
+
+**Si vous obtenez l'erreur "not authorized" ou "Command find requires authentication" :**
+
+Cela signifie que l'authentification MongoDB est activée. Vous avez deux options :
+
+**Option A : Désactiver l'authentification (recommandé pour début)**
+
+```bash
+# Éditer la configuration MongoDB
+sudo nano /etc/mongod.conf
+```
+
+Commentez ou supprimez la section `security` :
+```yaml
+# security:
+#   authorization: enabled
+```
+
+Redémarrer MongoDB :
+```bash
+sudo systemctl restart mongod
+```
+
+Mettre à jour le `.env` pour utiliser une connexion sans authentification :
+```env
+MONGODB_URI=mongodb://localhost:27017/cantine
+```
+
+Redémarrer l'application :
+```bash
+pm2 restart cantine
+```
+
+**Option B : Configurer l'authentification correctement (recommandé pour production)**
+
+Voir la section 9.1 ci-dessous.
+
+### 9.2 Activer l'authentification MongoDB (optionnel, pour production)
 
 ```bash
 sudo nano /etc/mongod.conf

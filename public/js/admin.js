@@ -1464,14 +1464,6 @@ async function importData() {
     }
     
     try {
-        const fileContent = await file.text();
-        const data = JSON.parse(fileContent);
-        
-        // Vérifier que c'est un fichier d'export valide
-        if (!data.exportDate && !data.products && !data.categories) {
-            throw new Error('Fichier invalide. Veuillez utiliser un fichier d\'export valide.');
-        }
-        
         const options = {
             importProducts: document.getElementById('import-products').checked,
             importCategories: document.getElementById('import-categories').checked,
@@ -1481,12 +1473,16 @@ async function importData() {
             overwrite: document.getElementById('import-overwrite').checked
         };
         
+        // Vérifier si c'est un fichier ZIP ou JSON
+        const isZip = file.name.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('options', JSON.stringify(options));
+        
         const response = await fetch('/api/import', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ data, options })
+            body: formData
         });
         
         const result = await response.json();
@@ -1528,14 +1524,16 @@ function displayImportResults(result) {
     html += '<table>';
     html += '<tr><th>Type</th><th>Importés</th><th>Erreurs</th></tr>';
     
-    const types = ['products', 'categories', 'coupons', 'users', 'sales'];
+    const types = ['products', 'categories', 'coupons', 'users', 'sales', 'images'];
     types.forEach(type => {
         if (result.results[type]) {
             const r = result.results[type];
+            const label = type === 'images' ? 'Images' : type.charAt(0).toUpperCase() + type.slice(1);
+            const count = type === 'images' ? (r.copied || 0) : r.imported;
             html += `<tr>
-                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
-                <td>${r.imported}</td>
-                <td>${r.errors.length}</td>
+                <td>${label}</td>
+                <td>${count}</td>
+                <td>${r.errors ? r.errors.length : 0}</td>
             </tr>`;
         }
     });

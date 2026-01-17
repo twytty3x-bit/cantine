@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const Category = require('../models/Category');
@@ -38,6 +41,32 @@ const upload = multer({
         }
         cb(new Error('Seules les images sont autorisées!'));
     }
+});
+
+// Configuration pour l'upload de fichiers ZIP (import)
+const zipStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const tempDir = path.join(__dirname, '..', 'temp_uploads');
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+        cb(null, tempDir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `import-${Date.now()}.zip`);
+    }
+});
+
+const uploadZip = multer({
+    storage: zipStorage,
+    fileFilter: function (req, file, cb) {
+        if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || 
+            file.originalname.endsWith('.zip')) {
+            return cb(null, true);
+        }
+        cb(new Error('Seuls les fichiers ZIP sont autorisés pour l\'import!'));
+    },
+    limits: { fileSize: 100 * 1024 * 1024 } // 100 MB max
 });
 
 // Récupérer tous les produits
@@ -908,9 +937,46 @@ router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
             data.sales = await Sale.find().lean();
         }
 
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename="cantine-export-${Date.now()}.json"`);
-        res.json(data);
+        // Créer un fichier ZIP avec les données JSON et les images
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Compression maximale
+        });
+
+        // Configurer les en-têtes pour le téléchargement ZIP
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="cantine-export-${Date.now()}.zip"`);
+
+        // Pipe l'archive vers la réponse
+        archive.pipe(res);
+
+        // Ajouter le fichier JSON
+        archive.append(JSON.stringify(data, null, 2), { name: 'data.json' });
+
+        // Collecter et ajouter les images des produits
+        if (products === 'true' && data.products) {
+            const imagePaths = new Set();
+            
+            // Collecter tous les chemins d'images uniques
+            data.products.forEach(product => {
+                if (product.image && product.image.startsWith('/uploads/products/')) {
+                    const imagePath = product.image.replace('/uploads/products/', '');
+                    imagePaths.add(imagePath);
+                }
+            });
+
+            // Ajouter chaque image au ZIP
+            const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+            
+            for (const imagePath of imagePaths) {
+                const fullPath = path.join(uploadsDir, imagePath);
+                if (fs.existsSync(fullPath)) {
+                    archive.file(fullPath, { name: `images/${imagePath}` });
+                }
+            }
+        }
+
+        // Finaliser l'archive
+        await archive.finalize();
     } catch (error) {
         console.error('Erreur lors de l\'export:', error);
         res.status(500).json({ message: 'Erreur lors de l\'export des données', error: error.message });
@@ -918,9 +984,71 @@ router.get('/export', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 // Importer des données (admin seulement)
-router.post('/import', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/import', authMiddleware, adminMiddleware, uploadZip.single('file'), async (req, res) => {
+    let zipFile = null;
+    let extractedDir = null;
+    
     try {
-        const { data, options = {} } = req.body;
+        let data;
+        let options = {};
+
+        // Si un fichier ZIP est fourni, l'extraire
+        if (req.file) {
+            zipFile = req.file.path;
+            const zip = new AdmZip(zipFile);
+            
+            // Créer un répertoire temporaire pour l'extraction
+            extractedDir = path.join(__dirname, '..', 'temp_uploads', `extracted-${Date.now()}`);
+            fs.mkdirSync(extractedDir, { recursive: true });
+            
+            // Extraire le ZIP
+            zip.extractAllTo(extractedDir, true);
+            
+            // Lire le fichier data.json
+            const dataJsonPath = path.join(extractedDir, 'data.json');
+            if (!fs.existsSync(dataJsonPath)) {
+                return res.status(400).json({ message: 'Fichier data.json introuvable dans le ZIP' });
+            }
+            
+            const dataJsonContent = fs.readFileSync(dataJsonPath, 'utf8');
+            const zipData = JSON.parse(dataJsonContent);
+            data = zipData;
+            
+            // Si des options sont fournies dans le body, les utiliser
+            if (req.body.options) {
+                try {
+                    options = typeof req.body.options === 'string' ? JSON.parse(req.body.options) : req.body.options;
+                } catch (e) {
+                    console.warn('Erreur lors du parsing des options:', e);
+                }
+            }
+            
+            // Copier les images dans le répertoire public/uploads/products
+            const imagesDir = path.join(extractedDir, 'images');
+            const targetImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+            
+            if (fs.existsSync(imagesDir)) {
+                // S'assurer que le répertoire de destination existe
+                if (!fs.existsSync(targetImagesDir)) {
+                    fs.mkdirSync(targetImagesDir, { recursive: true });
+                }
+                
+                // Copier tous les fichiers d'images
+                const imageFiles = fs.readdirSync(imagesDir);
+                for (const imageFile of imageFiles) {
+                    const sourcePath = path.join(imagesDir, imageFile);
+                    const targetPath = path.join(targetImagesDir, imageFile);
+                    fs.copyFileSync(sourcePath, targetPath);
+                    results.images.copied++;
+                }
+            }
+        } else {
+            // Fallback : utiliser les données du body (compatibilité avec l'ancien format)
+            data = req.body.data;
+            if (req.body.options) {
+                options = typeof req.body.options === 'string' ? JSON.parse(req.body.options) : req.body.options;
+            }
+        }
         
         if (!data) {
             return res.status(400).json({ message: 'Aucune donnée fournie' });
@@ -940,7 +1068,8 @@ router.post('/import', authMiddleware, adminMiddleware, async (req, res) => {
             categories: { imported: 0, errors: [] },
             coupons: { imported: 0, errors: [] },
             users: { imported: 0, errors: [] },
-            sales: { imported: 0, errors: [] }
+            sales: { imported: 0, errors: [] },
+            images: { copied: 0, errors: [] }
         };
 
         // Importer les catégories en premier (car les produits en dépendent)
@@ -973,6 +1102,15 @@ router.post('/import', authMiddleware, adminMiddleware, async (req, res) => {
                     // Supprimer _id pour éviter les conflits
                     delete productData._id;
                     delete productData.__v;
+                    
+                    // S'assurer que le chemin de l'image est correct
+                    if (productData.image && productData.image.startsWith('/uploads/products/')) {
+                        // Le chemin est déjà correct, on le garde tel quel
+                    } else if (productData.image) {
+                        // Si le chemin ne commence pas par /uploads/products/, l'ajuster
+                        const imageName = path.basename(productData.image);
+                        productData.image = `/uploads/products/${imageName}`;
+                    }
                     
                     if (overwrite) {
                         await Product.findOneAndUpdate(
