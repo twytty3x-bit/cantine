@@ -4,10 +4,19 @@ let currentCoupon = null;
 let subtotal = 0;
 let ticketConfig = { basePrice: 0.50, quantityOffers: [] }; // Configuration des tickets
 
+// Gestion du timeout de session (30 minutes)
+let inactivityTimer = null;
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes en millisecondes
+const WARNING_TIME = 5 * 60 * 1000; // Avertir 5 minutes avant la déconnexion
+let warningShown = false;
+
 // Initialisation
 document.addEventListener('DOMContentLoaded', async () => {
     // Vérifier l'authentification
     await checkAuth();
+    
+    // Initialiser le système de timeout de session
+    initSessionTimeout();
     
     await Promise.all([
         setupCategories(),
@@ -17,6 +26,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
     setupEventListeners();
 });
+
+// Initialiser le système de timeout de session
+function initSessionTimeout() {
+    // Réinitialiser le timer à chaque interaction utilisateur
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+        document.addEventListener(event, resetInactivityTimer, true);
+    });
+    
+    // Démarrer le timer
+    resetInactivityTimer();
+}
+
+// Réinitialiser le timer d'inactivité
+function resetInactivityTimer() {
+    // Réinitialiser l'avertissement
+    warningShown = false;
+    
+    // Effacer le timer existant
+    if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+    }
+    
+    // Afficher un avertissement 5 minutes avant la déconnexion
+    const warningTimer = setTimeout(() => {
+        showInactivityWarning();
+    }, SESSION_TIMEOUT - WARNING_TIME);
+    
+    // Déconnecter après 30 minutes d'inactivité
+    inactivityTimer = setTimeout(() => {
+        handleSessionTimeout();
+    }, SESSION_TIMEOUT);
+}
+
+// Afficher un avertissement avant la déconnexion
+function showInactivityWarning() {
+    if (warningShown) return;
+    warningShown = true;
+    
+    const warning = confirm(
+        'Vous serez déconnecté dans 5 minutes en raison de l\'inactivité.\n\n' +
+        'Cliquez sur OK pour rester connecté.'
+    );
+    
+    if (warning) {
+        // L'utilisateur a cliqué OK, réinitialiser le timer
+        resetInactivityTimer();
+    }
+}
+
+// Gérer le timeout de session
+async function handleSessionTimeout() {
+    console.log('Session expirée - déconnexion automatique');
+    
+    // Afficher un message
+    alert('Votre session a expiré en raison de l\'inactivité. Vous allez être déconnecté.');
+    
+    // Déconnecter l'utilisateur
+    try {
+        await fetch('/auth/logout', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors de la déconnexion:', error);
+    }
+    
+    // Rediriger vers la page de login
+    window.location.href = '/login?returnTo=' + encodeURIComponent(window.location.pathname);
+}
 
 // Charger la configuration des tickets
 async function loadTicketConfig() {
@@ -270,10 +353,11 @@ async function setupCategories() {
         
         const categoriesBar = document.querySelector('.categories-bar');
         
-        // Sauvegarder le bouton "Moitié-Moitié" s'il existe
+        // Sauvegarder les boutons spéciaux s'ils existent
         const ticketSaleBtn = categoriesBar.querySelector('.ticket-sale-btn');
+        const adminBtn = categoriesBar.querySelector('.admin-btn');
         
-        // Vider la barre de catégories (mais préserver le bouton Moitié-Moitié)
+        // Vider la barre de catégories (mais préserver les boutons spéciaux)
         const existingButtons = categoriesBar.querySelectorAll('.category-btn');
         existingButtons.forEach(btn => btn.remove());
         
@@ -298,6 +382,11 @@ async function setupCategories() {
         // Réajouter le bouton "Moitié-Moitié" s'il existait
         if (ticketSaleBtn) {
             categoriesBar.appendChild(ticketSaleBtn);
+        }
+        
+        // Réajouter le bouton "Admin" s'il existait
+        if (adminBtn) {
+            categoriesBar.appendChild(adminBtn);
         }
 
         // Gérer les clics sur les boutons de catégorie

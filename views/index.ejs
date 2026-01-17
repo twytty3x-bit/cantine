@@ -24,6 +24,12 @@
                     <i class="fas fa-ticket-alt"></i>
                     <span>Moitié-Moitié</span>
                 </button>
+                <% if (user && user.role === 'admin') { %>
+                <a href="/admin" class="admin-btn" title="Administration">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                <% } %>
             </div>
             <div class="products-grid" id="products-container">
                 <!-- Les produits seront ajoutés dynamiquement -->
