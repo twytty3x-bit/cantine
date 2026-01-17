@@ -257,6 +257,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 16px 0 0 16px;
+    z-index: 999; /* S'assurer que le panier est visible */
 }
 
 .cart-header {
@@ -357,7 +358,6 @@
 /* Section du bas du panier */
 .cart-footer {
     padding: 12px;
-    height: 750px;
     flex-shrink: 0;
     border-top: 1px solid var(--border-color);
     background: white;
@@ -365,6 +365,7 @@
     flex-direction: column;
     gap: 6px;
     overflow-y: auto;
+    max-height: 50vh;
 }
 
 .cart-total {
@@ -1106,6 +1107,8 @@
 @media screen and (min-width: 1024px) and (max-width: 1366px) {
     .pos-container {
         flex-direction: row;
+        height: 100vh;
+        overflow: hidden;
     }
     
     .products-section {
@@ -1114,6 +1117,7 @@
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        min-height: 0;
     }
     
     /* Barre de catégories pour iPad Pro */
@@ -1329,7 +1333,7 @@
         flex-shrink: 0;
     }
     
-    /* Panier en bas */
+    /* Panier en bas - visible et accessible */
     .cart-section {
         position: fixed;
         bottom: 0;
@@ -1337,13 +1341,16 @@
         right: 0;
         top: auto;
         width: 100%;
-        height: 45vh;
-        max-height: 45vh;
+        height: 50vh;
+        max-height: 50vh;
+        min-height: 300px;
         border-radius: 16px 16px 0 0;
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
         z-index: 1000;
         display: flex;
         flex-direction: column;
+        visibility: visible;
+        opacity: 1;
     }
     
     .pos-header {
@@ -1381,11 +1388,12 @@
         min-height: 0;
         padding: 10px;
         -webkit-overflow-scrolling: touch;
+        max-height: calc(50vh - 250px); /* Réserver de l'espace pour le footer */
     }
     
     .cart-footer {
         height: auto;
-        max-height: none;
+        max-height: 250px;
         overflow-y: auto;
         padding: 12px;
         flex-shrink: 0;
