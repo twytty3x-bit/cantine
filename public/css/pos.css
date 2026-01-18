@@ -1500,25 +1500,25 @@ body {
     }
     
     .cart-item {
-        padding: var(--spacing-xs) !important;
+        padding: 4px !important;
         margin-bottom: 0 !important;
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: var(--spacing-xs) !important;
+        gap: 2px !important;
         min-width: 0 !important;
     }
     
     .cart-item > * {
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
     }
     
     .cart-item .mini-image {
         width: 100% !important;
-        height: 60px !important;
-        min-height: 60px !important;
-        max-height: 60px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1536,56 +1536,56 @@ body {
         text-align: center !important;
         flex: 1 !important;
         min-width: 0 !important;
-        gap: 2px !important;
+        gap: 1px !important;
     }
     
     .cart-item .item-name {
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
         font-weight: 500 !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 2px !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         white-space: nowrap !important;
         width: 100% !important;
-        line-height: 1.2 !important;
+        line-height: 1.1 !important;
     }
     
     .cart-item .price-line {
         display: flex !important;
         flex-direction: column !important;
-        gap: 2px !important;
+        gap: 1px !important;
         align-items: center !important;
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
     }
     
     .cart-item .item-price {
-        font-size: 0.75rem !important;
+        font-size: 0.7rem !important;
     }
     
     .cart-item .item-subtotal {
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
         color: var(--text-light) !important;
     }
     
     .quantity-controls {
-        gap: 4px !important;
+        gap: 2px !important;
         display: flex !important;
         align-items: center !important;
-        margin-top: 4px !important;
+        margin-top: 2px !important;
     }
     
     .quantity-controls button {
-        width: 24px !important;
-        height: 24px !important;
-        min-width: 24px !important;
-        min-height: 24px !important;
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
         padding: 0 !important;
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
     }
     
     .quantity-controls span {
-        font-size: 0.7rem !important;
-        min-width: 20px !important;
+        font-size: 0.65rem !important;
+        min-width: 16px !important;
         text-align: center !important;
     }
     
@@ -1597,8 +1597,8 @@ body {
     
     .cart-item .remove-item {
         width: 100% !important;
-        padding: 4px !important;
-        font-size: 0.7rem !important;
+        padding: 2px !important;
+        font-size: 0.65rem !important;
     }
     
     .cart-item.ticket-item {
@@ -1606,8 +1606,8 @@ body {
     }
     
     .cart-item.ticket-item .item-email {
-        font-size: 0.65rem !important;
-        margin-top: 2px !important;
+        font-size: 0.6rem !important;
+        margin-top: 1px !important;
     }
     
     .cart-footer {
