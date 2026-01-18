@@ -50,10 +50,10 @@ function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
     }
     
-    // Afficher un avertissement 60 minutes avant la déconnexion
-    const warningTimer = setTimeout(() => {
-        showInactivityWarning();
-    }, Math.max(0, SESSION_TIMEOUT - WARNING_TIME));
+    // Avertissement désactivé - déconnexion directe après 30 minutes d'inactivité
+    // const warningTimer = setTimeout(() => {
+    //     showInactivityWarning();
+    // }, Math.max(0, SESSION_TIMEOUT - WARNING_TIME));
     
     // Déconnecter après 30 minutes d'inactivité
     inactivityTimer = setTimeout(() => {
