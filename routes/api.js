@@ -17,6 +17,7 @@ const { authMiddleware, adminMiddleware, ticketSellerMiddleware } = require('./a
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
 
 // Configuration de multer pour le stockage des images
 const storage = multer.diskStorage({
@@ -1504,10 +1505,34 @@ router.get('/tickets/config', async (req, res) => {
     }
 });
 
-// Acheter des coupons (route publique)
-router.post('/tickets/purchase', async (req, res) => {
+// Middleware d'authentification optionnel (ne bloque pas si non authentifié)
+const optionalAuthMiddleware = async (req, res, next) => {
+    try {
+        const token = req.cookies.token;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.userId);
+                if (user && user.active) {
+                    req.user = user;
+                }
+            } catch (error) {
+                // Ignorer les erreurs d'authentification, continuer sans utilisateur
+            }
+        }
+        next();
+    } catch (error) {
+        next();
+    }
+};
+
+// Acheter des coupons (route publique mais avec authentification optionnelle pour tracker le vendeur)
+router.post('/tickets/purchase', optionalAuthMiddleware, async (req, res) => {
     try {
         const { email, quantity, totalAmount, paymentMethod = 'cash' } = req.body;
+        
+        // Récupérer l'utilisateur si authentifié (pour tracker le vendeur)
+        const sellerId = req.user ? req.user._id : null;
         
         // Validation
         if (!email || !email.includes('@')) {
@@ -1565,7 +1590,8 @@ router.post('/tickets/purchase', async (req, res) => {
                 email: email.toLowerCase().trim(),
                 quantity: 1,
                 totalAmount: totalAmount / quantity,
-                paymentMethod
+                paymentMethod,
+                soldBy: sellerId
             });
             
             tickets.push(ticket);
@@ -1617,6 +1643,98 @@ router.post('/tickets/purchase', async (req, res) => {
     } catch (error) {
         console.error('Erreur lors de l\'achat de coupons:', error);
         res.status(500).json({ message: 'Erreur lors de l\'achat de coupons', error: error.message });
+    }
+});
+
+// Obtenir les statistiques de vente par vendeur (admin seulement)
+router.get('/tickets/seller-report', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        // Construire le filtre de date si fourni
+        const dateFilter = {};
+        if (startDate || endDate) {
+            dateFilter.purchaseDate = {};
+            if (startDate) {
+                dateFilter.purchaseDate.$gte = new Date(startDate);
+            }
+            if (endDate) {
+                dateFilter.purchaseDate.$lte = new Date(endDate);
+                // Inclure toute la journée de fin
+                dateFilter.purchaseDate.$lte.setHours(23, 59, 59, 999);
+            }
+        }
+        
+        // Agréger les ventes par vendeur
+        const sellerStats = await Ticket.aggregate([
+            { $match: { ...dateFilter, status: { $ne: 'cancelled' } } },
+            {
+                $group: {
+                    _id: '$soldBy',
+                    totalTickets: { $sum: 1 },
+                    totalAmount: { $sum: '$totalAmount' },
+                    totalQuantity: { $sum: '$quantity' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'seller'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$seller',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    sellerId: '$_id',
+                    sellerName: {
+                        $cond: {
+                            if: { $eq: ['$seller', null] },
+                            then: 'Non assigné',
+                            else: '$seller.username'
+                        }
+                    },
+                    sellerEmail: {
+                        $cond: {
+                            if: { $eq: ['$seller', null] },
+                            then: null,
+                            else: '$seller.email'
+                        }
+                    },
+                    totalTickets: 1,
+                    totalAmount: { $round: ['$totalAmount', 2] },
+                    totalQuantity: 1
+                }
+            },
+            { $sort: { totalAmount: -1 } }
+        ]);
+        
+        // Calculer les totaux globaux
+        const totalStats = await Ticket.aggregate([
+            { $match: { ...dateFilter, status: { $ne: 'cancelled' } } },
+            {
+                $group: {
+                    _id: null,
+                    totalTickets: { $sum: 1 },
+                    totalAmount: { $sum: '$totalAmount' },
+                    totalQuantity: { $sum: '$quantity' }
+                }
+            }
+        ]);
+        
+        res.json({
+            sellers: sellerStats,
+            totals: totalStats[0] || { totalTickets: 0, totalAmount: 0, totalQuantity: 0 }
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du rapport des vendeurs:', error);
+        res.status(500).json({ message: error.message });
     }
 });
 

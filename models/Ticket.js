@@ -54,6 +54,11 @@ const ticketSchema = new mongoose.Schema({
     cancellationReason: {
         type: String,
         trim: true
+    },
+    soldBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
     }
 }, {
     timestamps: true

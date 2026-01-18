@@ -1618,6 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTicketsStats();
         loadTickets();
         loadTicketConfig();
+        loadSellerReport();
     }
     
     if (document.querySelector('[data-tab="smtp"]')) {
@@ -1923,6 +1924,63 @@ async function cancelTicket(ticketId, ticketNumber) {
 
 // Charger les logs d'annulation
 let currentLogsPage = 1;
+
+// Charger le rapport des vendeurs
+async function loadSellerReport() {
+    try {
+        const startDate = document.getElementById('seller-report-start-date')?.value || '';
+        const endDate = document.getElementById('seller-report-end-date')?.value || '';
+        
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        
+        const response = await fetch(`/api/tickets/seller-report?${params.toString()}`);
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement du rapport');
+        }
+        
+        const data = await response.json();
+        
+        // Afficher les totaux
+        const summaryDiv = document.getElementById('seller-report-summary');
+        if (summaryDiv) {
+            summaryDiv.style.display = 'flex';
+            document.getElementById('seller-total-tickets').textContent = data.totals.totalTickets || 0;
+            document.getElementById('seller-total-amount').textContent = (data.totals.totalAmount || 0).toFixed(2) + '$';
+        }
+        
+        // Afficher le tableau
+        const tbody = document.querySelector('#seller-report-table tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (data.sellers && data.sellers.length > 0) {
+            data.sellers.forEach(seller => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${seller.sellerName || 'Non assigné'}</strong></td>
+                    <td>${seller.sellerEmail || '-'}</td>
+                    <td>${seller.totalTickets || 0}</td>
+                    <td><strong>${(seller.totalAmount || 0).toFixed(2)}$</strong></td>
+                    <td>${seller.totalQuantity || 0}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="5" style="text-align: center; padding: 20px; color: #999;">Aucune vente enregistrée</td>';
+            tbody.appendChild(tr);
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement du rapport des vendeurs:', error);
+        const tbody = document.querySelector('#seller-report-table tbody');
+        if (tbody) {
+            tbody.innerHTML = '<td colspan="5" style="text-align: center; padding: 20px; color: #dc2626;">Erreur lors du chargement des données</td>';
+        }
+    }
+}
 
 async function loadTicketLogs(page = 1) {
     try {
