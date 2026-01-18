@@ -1308,11 +1308,16 @@ body {
     }
     
     .cart-header {
-        padding: var(--spacing-sm) !important;
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
     }
     
     .cart-header h2 {
-        font-size: 1.125rem !important;
+        font-size: 1rem !important;
+    }
+    
+    .clear-btn {
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+        font-size: 0.75rem !important;
     }
     
     .cart-items {
@@ -1690,11 +1695,16 @@ body {
     }
     
     .cart-header {
-        padding: var(--spacing-sm) !important;
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
     }
     
     .cart-header h2 {
-        font-size: 1.125rem !important;
+        font-size: 1rem !important;
+    }
+    
+    .clear-btn {
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+        font-size: 0.75rem !important;
     }
     
     .cart-items {
