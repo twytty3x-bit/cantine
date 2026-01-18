@@ -458,6 +458,7 @@ body {
     flex-direction: column;
     z-index: 999;
     border-left: 1px solid var(--border-color);
+    overflow: hidden;
 }
 
 /* Header panier */
@@ -509,11 +510,44 @@ body {
 
 /* Items du panier */
 .cart-items {
-    flex: 1;
+    flex: 1 1 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: var(--spacing-md);
     min-height: 0;
     -webkit-overflow-scrolling: touch;
+    /* Sur desktop, utiliser tout l'espace disponible - scrollbar seulement si nécessaire */
+    max-height: none;
+}
+
+/* Sur desktop, optimiser le panier pour utiliser tout l'espace disponible */
+@media screen and (min-width: 1367px) {
+    .cart-section {
+        /* S'assurer que le panier utilise toute la hauteur disponible */
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .cart-items {
+        /* S'assurer que la scrollbar n'apparaît que si le contenu dépasse vraiment */
+        overflow-y: auto;
+        /* Utiliser tout l'espace disponible entre le header et le footer */
+        flex: 1 1 0;
+        min-height: 0;
+        /* Pas de hauteur maximale pour utiliser tout l'espace */
+        max-height: none;
+    }
+    
+    .cart-footer {
+        /* Réduire l'espace pris par le footer si nécessaire */
+        padding: var(--spacing-xs) var(--spacing-sm);
+        flex-shrink: 0;
+    }
+    
+    .cart-header {
+        flex-shrink: 0;
+    }
 }
 
 .cart-items::-webkit-scrollbar {
