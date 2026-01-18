@@ -7,7 +7,7 @@ let ticketConfig = { basePrice: 0.50, quantityOffers: [] }; // Configuration des
 // Gestion du timeout de session (30 minutes)
 let inactivityTimer = null;
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes en millisecondes
-const WARNING_TIME = 5 * 60 * 1000; // Avertir 5 minutes avant la déconnexion
+const WARNING_TIME = 60 * 60 * 1000; // Avertir 60 minutes avant la déconnexion
 let warningShown = false;
 
 // Initialisation
@@ -50,10 +50,10 @@ function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
     }
     
-    // Afficher un avertissement 5 minutes avant la déconnexion
+    // Afficher un avertissement 60 minutes avant la déconnexion
     const warningTimer = setTimeout(() => {
         showInactivityWarning();
-    }, SESSION_TIMEOUT - WARNING_TIME);
+    }, Math.max(0, SESSION_TIMEOUT - WARNING_TIME));
     
     // Déconnecter après 30 minutes d'inactivité
     inactivityTimer = setTimeout(() => {
@@ -67,7 +67,7 @@ function showInactivityWarning() {
     warningShown = true;
     
     const warning = confirm(
-        'Vous serez déconnecté dans 5 minutes en raison de l\'inactivité.\n\n' +
+        'Vous serez déconnecté dans 60 minutes en raison de l\'inactivité.\n\n' +
         'Cliquez sur OK pour rester connecté.'
     );
     
