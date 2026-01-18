@@ -355,7 +355,6 @@ async function setupCategories() {
         
         // Sauvegarder les boutons spéciaux s'ils existent
         const ticketSaleBtn = categoriesBar.querySelector('.ticket-sale-btn');
-        const couponBtn = categoriesBar.querySelector('.coupon-btn');
         const adminBtn = categoriesBar.querySelector('.admin-btn');
         
         // Vider la barre de catégories (mais préserver les boutons spéciaux)
@@ -383,11 +382,6 @@ async function setupCategories() {
         // Réajouter le bouton "Moitié-Moitié" s'il existait
         if (ticketSaleBtn) {
             categoriesBar.appendChild(ticketSaleBtn);
-        }
-        
-        // Réajouter le bouton "Coupon" s'il existait
-        if (couponBtn) {
-            categoriesBar.appendChild(couponBtn);
         }
         
         // Réajouter le bouton "Admin" s'il existait

@@ -24,10 +24,6 @@
                     <i class="fas fa-ticket-alt"></i>
                     <span>Moitié-Moitié</span>
                 </button>
-                <button class="coupon-btn" onclick="openCouponModal()">
-                    <i class="fas fa-tag"></i>
-                    <span>Coupon</span>
-                </button>
                 <% if (user && user.role === 'admin') { %>
                 <a href="/admin" class="admin-btn" title="Administration">
                     <i class="fas fa-cog"></i>
@@ -44,9 +40,15 @@
         <div class="cart-section">
             <div class="cart-header">
                 <h2>Panier actuel</h2>
-                <button id="clear-cart" class="clear-btn">
-                    <i class="fas fa-trash"></i> Vider
-                </button>
+                <div class="cart-header-actions">
+                    <button class="coupon-btn" onclick="openCouponModal()" title="Appliquer un coupon">
+                        <i class="fas fa-tag"></i>
+                        <span>Coupon</span>
+                    </button>
+                    <button id="clear-cart" class="clear-btn">
+                        <i class="fas fa-trash"></i> Vider
+                    </button>
+                </div>
             </div>
             
             <!-- Zone des produits -->
