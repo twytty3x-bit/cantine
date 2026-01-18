@@ -511,34 +511,41 @@ body {
 
 /* Footer panier */
 .cart-footer {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
     flex-shrink: 0;
     border-top: 1px solid var(--border-color);
     background: var(--bg-white);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: 3px;
     overflow: visible;
 }
 
-.amount-due,
-.total-amount,
-.change-due {
-    padding: var(--spacing-xs) var(--spacing-sm);
+.amount-due {
+    padding: 2px var(--spacing-xs);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+}
+
+.change-due {
+    padding: 2px var(--spacing-xs);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .total-amount {
     background: var(--primary-color);
     color: white;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 700;
     border-radius: var(--radius-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin: var(--spacing-xs) 0;
+    padding: 3px var(--spacing-xs);
+    margin: 2px 0;
 }
 
 .change-due {
@@ -547,56 +554,56 @@ body {
 
 #change-amount {
     color: var(--success-color);
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 700;
 }
 
 /* Section coupons */
 .coupons-section {
-    padding: var(--spacing-xs);
-    margin: var(--spacing-xs) 0;
+    padding: 3px;
+    margin: 2px 0;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: var(--bg-color);
-    max-height: 120px;
+    max-height: 60px;
     overflow-y: auto;
 }
 
 .coupons-header {
-    padding: var(--spacing-xs);
-    font-size: 0.75rem;
+    padding: 2px;
+    font-size: 0.65rem;
     font-weight: 600;
     color: var(--text-color);
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    margin-bottom: 2px;
+    gap: 4px;
+    margin-bottom: 1px;
 }
 
 .coupons-header h3 {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     margin: 0;
 }
 
 .coupon-info,
 .discount-amount {
-    margin: 2px var(--spacing-xs);
-    font-size: 0.75rem;
+    margin: 1px 4px;
+    font-size: 0.65rem;
 }
 
 .available-coupons {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: 3px;
     flex-wrap: wrap;
-    padding: var(--spacing-xs);
+    padding: 2px;
 }
 
 .coupon-button {
-    padding: 2px var(--spacing-xs);
+    padding: 1px 4px;
     background: var(--bg-white);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     cursor: pointer;
     transition: var(--transition);
 }
@@ -610,30 +617,34 @@ body {
 /* Input paiement */
 .payment-input {
     background: var(--bg-color);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin: var(--spacing-xs) 0;
+    padding: 3px var(--spacing-xs);
+    margin: 2px 0;
     border-radius: var(--radius-sm);
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 .payment-input label {
     font-weight: 600;
     color: var(--text-color);
-    font-size: 0.8125rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .payment-input input {
-    width: 100%;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 2px solid var(--border-color);
+    flex: 1;
+    padding: 3px var(--spacing-xs);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--primary-color);
     background: white;
     transition: var(--transition);
+    min-width: 0;
 }
 
 .payment-input input:focus {
@@ -644,18 +655,19 @@ body {
 
 /* Bouton compléter */
 .complete-btn {
-    margin-top: var(--spacing-xs);
-    padding: var(--spacing-sm);
+    margin-top: 3px;
+    padding: 6px var(--spacing-xs);
     background: var(--success-color);
     color: white;
     border: none;
     border-radius: var(--radius-sm);
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
-    min-height: 44px;
+    min-height: 36px;
     box-shadow: var(--shadow-md);
+    width: 100%;
 }
 
 .complete-btn:hover:not(:disabled) {
