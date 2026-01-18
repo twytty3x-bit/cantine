@@ -521,11 +521,17 @@ function addToCart(productId) {
             product: product,
             quantity: 1,
             price: product.price,
-            cost: product.costPrice
+            cost: product.costPrice,
+            discount: 0
         });
     }
 
-    updateCart();
+    // Si un coupon est actif, le réappliquer pour recalculer les réductions avec le nouveau produit
+    if (currentCoupon) {
+        applyCoupon(currentCoupon);
+    } else {
+        updateCart();
+    }
 }
 
 // Ajouter des coupons au panier
@@ -566,7 +572,12 @@ function updateQuantity(index, newQuantity) {
     // Recalculer le prix unitaire
     item.price = calculatePrice(item.product, newQuantity);
     
-    updateCart();
+    // Si un coupon est actif, le réappliquer pour recalculer les réductions avec la nouvelle quantité
+    if (currentCoupon) {
+        applyCoupon(currentCoupon);
+    } else {
+        updateCart();
+    }
 }
 
 // Mettre à jour la fonction d'affichage du panier
@@ -588,10 +599,10 @@ function updateCart() {
         console.log('Traitement item', index, ':', item);
         
         // Pour les tickets, le prix est déjà le total
-        // Pour les produits, multiplier par la quantité
-        const itemSubtotal = item.isTicket ? item.price : (item.price * item.quantity);
+        // Pour les produits, utiliser le prix original (item.product.price) multiplié par la quantité
+        // Le prix affiché dans le panier doit toujours être le prix original, pas le prix modifié
+        const itemSubtotal = item.isTicket ? item.price : (item.product.price * item.quantity);
         subtotal += itemSubtotal;
-        total += itemSubtotal;
 
         // Gérer les tickets différemment
         if (item.isTicket) {
@@ -645,7 +656,7 @@ function updateCart() {
                             </button>
                         </div>
                         <div class="cart-item-price">
-                            <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
+                            <span class="item-subtotal">${(item.product.price * item.quantity).toFixed(2)}$</span>
                         </div>
                     </div>
                 </div>
@@ -1062,10 +1073,10 @@ async function completeSale() {
             const items = productItems.map(item => ({
                 product: item.product._id,
                 quantity: item.quantity,
-                price: item.product.price,
+                price: item.product.price, // Prix original du produit
                 cost: item.product.costPrice,
                 discount: item.discount || 0,
-                finalPrice: item.price
+                finalPrice: item.product.price - ((item.discount || 0) / item.quantity) // Prix final après réduction
             }));
 
             const profit = items.reduce((sum, item) => {
@@ -1074,7 +1085,12 @@ async function completeSale() {
                 return sum + (revenue - cost);
             }, 0);
 
-            const productTotal = productItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            // Calculer le total avec les prix originaux moins les réductions
+            const productTotal = productItems.reduce((sum, item) => {
+                const originalTotal = item.product.price * item.quantity;
+                const discount = item.discount || 0;
+                return sum + (originalTotal - discount);
+            }, 0);
 
             const saleData = {
                 items: items,
@@ -1257,10 +1273,9 @@ async function applyCoupon(couponOrCode) {
         // Si on clique sur le coupon déjà actif, on le désactive
         if (currentCoupon && currentCoupon._id === coupon._id) {
             currentCoupon = null;
-            // Réinitialiser les prix originaux
+            // Réinitialiser les réductions
             cart.forEach(item => {
                 item.discount = 0;
-                item.price = item.product.price; // Utiliser le prix original du produit
             });
             document.getElementById('discount-amount').style.display = 'none';
             updateCart();
@@ -1268,10 +1283,15 @@ async function applyCoupon(couponOrCode) {
         }
 
         // Calculer le rabais seulement pour les produits applicables
-        let totalDiscount = 0;
+        // IMPORTANT: Ne pas modifier item.price, seulement calculer item.discount
         cart.forEach(item => {
-            // Réinitialiser d'abord le prix à sa valeur originale
-            item.price = item.product.price;
+            // Réinitialiser la réduction
+            item.discount = 0;
+            
+            // Ignorer les tickets (pas de coupon sur les tickets)
+            if (item.isTicket) {
+                return;
+            }
             
             let isApplicable = false;
 
@@ -1288,18 +1308,14 @@ async function applyCoupon(couponOrCode) {
             }
 
             if (isApplicable) {
-                const itemTotal = item.quantity * item.price;
+                // Utiliser le prix original du produit (item.product.price)
+                const itemTotal = item.quantity * item.product.price;
                 const itemDiscount = coupon.type === 'percentage' 
                     ? (itemTotal * coupon.value / 100)
                     : (coupon.value / getApplicableItemsCount(coupon));
                 
                 item.discount = itemDiscount;
-                item.price = item.price - (itemDiscount / item.quantity);
-            } else {
-                item.discount = 0;
             }
-
-            totalDiscount += item.discount;
         });
 
         currentCoupon = coupon;
@@ -1309,10 +1325,9 @@ async function applyCoupon(couponOrCode) {
         console.error('Erreur lors de l\'application du coupon:', error);
         currentCoupon = null;
         
-        // Réinitialiser les prix en cas d'erreur
+        // Réinitialiser les réductions en cas d'erreur
         cart.forEach(item => {
             item.discount = 0;
-            item.price = item.product.price;
         });
         updateCart();
         throw error; // Re-lancer l'erreur pour que la modal puisse l'afficher
@@ -1321,6 +1336,11 @@ async function applyCoupon(couponOrCode) {
 
 function getApplicableItemsCount(coupon) {
     return cart.filter(item => {
+        // Ignorer les tickets
+        if (item.isTicket) {
+            return false;
+        }
+        
         switch (coupon.applicationType) {
             case 'all':
                 return true;
