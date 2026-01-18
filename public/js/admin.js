@@ -1781,12 +1781,19 @@ async function drawWinner() {
                     <p><strong>Numéro gagnant:</strong> <span class="ticket-number">${data.winner.ticketNumber}</span></p>
                     <p><strong>Email:</strong> ${data.winner.email}</p>
                     <p><strong>Date d'achat:</strong> ${new Date(data.winner.purchaseDate).toLocaleDateString('fr-FR')}</p>
-                    <p class="success-note">Un email a été envoyé au gagnant.</p>
+                    <div class="email-action" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                        <p style="margin-bottom: 15px; color: var(--text-light);">Souhaitez-vous envoyer un email de notification au gagnant ?</p>
+                        <button onclick="sendWinnerEmail('${data.winner._id}')" class="btn-primary" id="send-email-btn" style="padding: 10px 20px; font-size: 1rem;">
+                            <i class="fas fa-envelope"></i>
+                            Envoyer l'email au gagnant
+                        </button>
+                    </div>
                 </div>
             `;
             
             // Recharger la liste
             loadTickets(currentTicketsPage);
+            loadTicketsStats();
         } else {
             resultDiv.style.display = 'block';
             resultDiv.className = 'draw-result error';
@@ -1800,6 +1807,49 @@ async function drawWinner() {
     } finally {
         drawBtn.disabled = false;
         drawBtn.innerHTML = '<i class="fas fa-magic"></i> <span>Tirer un gagnant</span>';
+    }
+}
+
+// Envoyer l'email au gagnant
+async function sendWinnerEmail(ticketId) {
+    const sendBtn = document.getElementById('send-email-btn');
+    if (!sendBtn) return;
+    
+    const originalText = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    
+    try {
+        const response = await fetch('/api/tickets/draw/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ticketId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            sendBtn.innerHTML = '<i class="fas fa-check"></i> Email envoyé !';
+            sendBtn.style.background = 'var(--success-color)';
+            sendBtn.disabled = true;
+            
+            // Mettre à jour le message dans le résultat
+            const emailAction = document.querySelector('.email-action');
+            if (emailAction) {
+                emailAction.innerHTML = '<p style="color: var(--success-color); font-weight: 600;"><i class="fas fa-check-circle"></i> Email envoyé avec succès au gagnant</p>';
+            }
+        } else {
+            alert(data.message || 'Erreur lors de l\'envoi de l\'email');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'envoi de l\'email');
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
     }
 }
 

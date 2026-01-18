@@ -1440,16 +1440,16 @@ const getEmailFrom = async () => {
     return process.env.SMTP_FROM || process.env.SMTP_USER;
 };
 
-// Générer un numéro de ticket unique
+// Générer un numéro de ticket unique (uniquement des chiffres)
 async function generateTicketNumber() {
     let ticketNumber;
     let exists = true;
     
     while (exists) {
-        // Format: TICKET-YYYYMMDD-XXXXXX (6 chiffres aléatoires)
+        // Format: YYYYMMDD + 8 chiffres aléatoires (ex: 2024011612345678)
         const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-        const random = Math.floor(100000 + Math.random() * 900000);
-        ticketNumber = `TICKET-${date}-${random}`;
+        const random = Math.floor(10000000 + Math.random() * 90000000); // 8 chiffres aléatoires
+        ticketNumber = `${date}${random}`;
         
         const existing = await Ticket.findOne({ ticketNumber });
         exists = !!existing;
@@ -1643,6 +1643,65 @@ router.post('/tickets/purchase', optionalAuthMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Erreur lors de l\'achat de coupons:', error);
         res.status(500).json({ message: 'Erreur lors de l\'achat de coupons', error: error.message });
+    }
+});
+
+// Envoyer l'email au gagnant (admin seulement)
+router.post('/tickets/draw/send-email', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { ticketId } = req.body;
+        
+        if (!ticketId) {
+            return res.status(400).json({ message: 'ID du ticket requis' });
+        }
+        
+        const winner = await Ticket.findById(ticketId);
+        
+        if (!winner) {
+            return res.status(404).json({ message: 'Ticket non trouvé' });
+        }
+        
+        if (!winner.isWinner) {
+            return res.status(400).json({ message: 'Ce ticket n\'est pas un gagnant' });
+        }
+        
+        // Envoyer un email au gagnant
+        try {
+            const transporter = await createEmailTransporter();
+            const emailFrom = await getEmailFrom();
+            
+            if (transporter) {
+                const mailOptions = {
+                    from: emailFrom,
+                    to: winner.email,
+                    subject: '🎉 Félicitations ! Vous avez gagné !',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #16a34a;">🎉 Félicitations !</h2>
+                            <p>Votre numéro de coupon <strong style="color: #0066cc; font-size: 20px;">${winner.ticketNumber}</strong> a été tiré au sort et vous avez gagné !</p>
+                            <p>Nous vous contacterons bientôt pour vous remettre votre prix.</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
+                        </div>
+                    `
+                };
+                
+                await transporter.sendMail(mailOptions);
+                
+                res.json({
+                    success: true,
+                    message: 'Email envoyé avec succès au gagnant'
+                });
+            } else {
+                res.status(500).json({ message: 'Configuration SMTP manquante' });
+            }
+        } catch (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'email au gagnant:', emailError);
+            res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email', error: emailError.message });
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi de l\'email:', error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -1948,41 +2007,14 @@ router.post('/tickets/draw', authMiddleware, adminMiddleware, async (req, res) =
         winner.winnerDate = new Date();
         await winner.save();
         
-        // Envoyer un email au gagnant
-        try {
-            const transporter = await createEmailTransporter();
-            const emailFrom = await getEmailFrom();
-            
-            if (transporter) {
-                const mailOptions = {
-                    from: emailFrom,
-                    to: winner.email,
-                    subject: '🎉 Félicitations ! Vous avez gagné !',
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                            <h2 style="color: #16a34a;">🎉 Félicitations !</h2>
-                            <p>Votre numéro de coupon <strong style="color: #0066cc; font-size: 20px;">${winner.ticketNumber}</strong> a été tiré au sort et vous avez gagné !</p>
-                            <p>Nous vous contacterons bientôt pour vous remettre votre prix.</p>
-                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                            <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
-                        </div>
-                    `
-                };
-                
-                await transporter.sendMail(mailOptions);
-            }
-        } catch (emailError) {
-            console.error('Erreur lors de l\'envoi de l\'email au gagnant:', emailError);
-            // Ne pas faire échouer la transaction
-        }
-        
         res.json({
             success: true,
             message: 'Gagnant sélectionné avec succès',
             winner: {
                 ticketNumber: winner.ticketNumber,
                 email: winner.email,
-                purchaseDate: winner.purchaseDate
+                purchaseDate: winner.purchaseDate,
+                _id: winner._id
             }
         });
     } catch (error) {
