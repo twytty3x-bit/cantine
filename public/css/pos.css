@@ -520,36 +520,6 @@ body {
     max-height: none;
 }
 
-/* Sur desktop, optimiser le panier pour utiliser tout l'espace disponible */
-@media screen and (min-width: 1367px) {
-    .cart-section {
-        /* S'assurer que le panier utilise toute la hauteur disponible */
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .cart-items {
-        /* S'assurer que la scrollbar n'apparaît que si le contenu dépasse vraiment */
-        overflow-y: auto;
-        /* Utiliser tout l'espace disponible entre le header et le footer */
-        flex: 1 1 0;
-        min-height: 0;
-        /* Pas de hauteur maximale pour utiliser tout l'espace */
-        max-height: none;
-    }
-    
-    .cart-footer {
-        /* Réduire l'espace pris par le footer si nécessaire */
-        padding: var(--spacing-xs) var(--spacing-sm);
-        flex-shrink: 0;
-    }
-    
-    .cart-header {
-        flex-shrink: 0;
-    }
-}
-
 .cart-items::-webkit-scrollbar {
     width: 8px;
 }
@@ -2763,4 +2733,57 @@ body {
 .sale-notification-button:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   RÈGLES DESKTOP - DOIT ÊTRE APRÈS LES RÈGLES iPad
+   ============================================ */
+
+/* Sur desktop (1024px et plus), optimiser le panier pour utiliser tout l'espace disponible */
+/* Cette règle doit être placée APRÈS les règles iPad pour avoir la priorité */
+@media screen and (min-width: 1024px) {
+    .cart-section {
+        /* S'assurer que le panier utilise toute la hauteur disponible */
+        height: 100vh !important;
+        max-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 0 !important;
+        bottom: auto !important;
+        right: 0 !important;
+        left: auto !important;
+        width: 420px !important;
+        border-radius: 0 !important;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .cart-items {
+        /* S'assurer que la scrollbar n'apparaît que si le contenu dépasse vraiment */
+        overflow-y: auto !important;
+        /* Utiliser tout l'espace disponible entre le header et le footer */
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        /* Pas de hauteur maximale pour utiliser tout l'espace */
+        max-height: none !important;
+        /* Annuler les règles iPad */
+        height: auto !important;
+        display: block !important;
+        grid-template-columns: none !important;
+        align-content: unset !important;
+        padding: var(--spacing-md) !important;
+        gap: 0 !important;
+    }
+    
+    .cart-footer {
+        /* Réduire l'espace pris par le footer si nécessaire */
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+    }
+    
+    .cart-header {
+        flex-shrink: 0 !important;
+        padding: var(--spacing-md) !important;
+    }
 }
