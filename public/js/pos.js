@@ -612,7 +612,6 @@ function updateCart() {
                     <span class="item-name">${ticketQuantity} coupon(s)</span>
                     <div class="item-email" style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">${ticketEmail}</div>
                     <div class="price-line">
-                        <span class="item-price">${ticketPrice.toFixed(2)}$</span>
                         <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
                     </div>
                 </div>
@@ -633,7 +632,6 @@ function updateCart() {
                 <div class="cart-item-details">
                     <span class="item-name">${item.product.name}</span>
                     <div class="price-line">
-                        <span class="item-price">${item.price.toFixed(2)}$</span>
                         <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
                     </div>
                     <div class="quantity-controls">

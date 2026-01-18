@@ -1577,17 +1577,14 @@ body {
         flex-direction: row !important;
         gap: 4px !important;
         align-items: center !important;
+        justify-content: flex-end !important;
         font-size: 0.6rem !important;
-    }
-    
-    .cart-item .item-price {
-        font-size: 0.7rem !important;
-        font-weight: 600 !important;
     }
     
     .cart-item .item-subtotal {
-        font-size: 0.6rem !important;
-        color: var(--text-light) !important;
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        color: var(--text-color) !important;
     }
     
     .quantity-controls {
