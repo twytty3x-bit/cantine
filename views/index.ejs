@@ -93,25 +93,18 @@
         <div class="modal-content">
             <span class="close" onclick="closeCouponModal()">&times;</span>
             <h2><i class="fas fa-tag"></i> Appliquer un coupon</h2>
-            <form id="coupon-form">
-                <div class="form-group">
-                    <label for="coupon-code-input">
-                        <i class="fas fa-barcode"></i>
-                        Code du coupon
-                    </label>
-                    <input type="text" id="coupon-code-input" placeholder="Entrez le code du coupon" autocomplete="off">
+            <div id="coupon-modal-info" class="coupon-info" style="margin: var(--spacing-sm) 0; display: none;"></div>
+            <div id="available-coupons-list" class="available-coupons-list">
+                <div class="loading-coupons">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Chargement des coupons...</span>
                 </div>
-                <div id="coupon-modal-info" class="coupon-info" style="margin: var(--spacing-sm) 0;"></div>
-                <div class="form-buttons">
-                    <button type="button" class="btn-primary" onclick="applyCouponFromModal()">
-                        <i class="fas fa-check"></i>
-                        Appliquer
-                    </button>
-                    <button type="button" class="btn-secondary" onclick="closeCouponModal()">
-                        Annuler
-                    </button>
-                </div>
-            </form>
+            </div>
+            <div class="form-buttons">
+                <button type="button" class="btn-secondary" onclick="closeCouponModal()">
+                    Fermer
+                </button>
+            </div>
         </div>
     </div>
 

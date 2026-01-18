@@ -787,6 +787,117 @@ body {
     font-size: 1.5rem;
 }
 
+/* Styles pour la liste des coupons disponibles dans la modal */
+.available-coupons-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-sm);
+}
+
+.loading-coupons,
+.no-coupons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--text-light);
+    text-align: center;
+    gap: var(--spacing-sm);
+}
+
+.loading-coupons i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.no-coupons i {
+    font-size: 2rem;
+    color: var(--text-light);
+}
+
+.no-coupons.error i {
+    color: #ef4444;
+}
+
+.no-coupons .error-detail {
+    font-size: 0.875rem;
+    color: #ef4444;
+    margin-top: var(--spacing-xs);
+}
+
+.coupon-option-button {
+    width: 100%;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    background: var(--bg-white);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.coupon-option-button:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.coupon-option-button.active {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.coupon-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.coupon-option-header .coupon-code {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.coupon-option-header .coupon-status {
+    font-size: 0.875rem;
+    color: #10b981;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.coupon-option-header .coupon-status.active {
+    color: #10b981;
+}
+
+.coupon-option-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.coupon-option-details .coupon-value {
+    font-size: 0.9375rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.coupon-option-details .coupon-description {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
 .form-group {
     margin-bottom: var(--spacing-lg);
 }

@@ -881,25 +881,19 @@ function closeTicketSaleModal() {
 }
 
 // Fonctions pour la modal coupon
-function openCouponModal() {
+async function openCouponModal() {
     const modal = document.getElementById('coupon-modal');
     if (modal) {
         modal.style.display = 'flex';
-        // Réinitialiser le formulaire
-        const form = document.getElementById('coupon-form');
-        if (form) {
-            form.reset();
-        }
+        // Réinitialiser les messages
         const couponInfo = document.getElementById('coupon-modal-info');
         if (couponInfo) {
             couponInfo.textContent = '';
             couponInfo.className = 'coupon-info';
+            couponInfo.style.display = 'none';
         }
-        // Focus sur l'input
-        const input = document.getElementById('coupon-code-input');
-        if (input) {
-            input.focus();
-        }
+        // Charger les coupons disponibles
+        await loadAvailableCouponsForModal();
     }
 }
 
@@ -910,35 +904,110 @@ function closeCouponModal() {
     }
 }
 
-async function applyCouponFromModal() {
-    const codeInput = document.getElementById('coupon-code-input');
+// Charger les coupons disponibles pour la modal
+async function loadAvailableCouponsForModal() {
+    const couponsList = document.getElementById('available-coupons-list');
     const couponInfo = document.getElementById('coupon-modal-info');
     
-    if (!codeInput || !couponInfo) {
-        console.error('Éléments de la modal coupon non trouvés');
+    if (!couponsList) {
+        console.error('Élément available-coupons-list non trouvé');
         return;
     }
     
-    const code = codeInput.value.trim();
-    
-    if (!code) {
-        couponInfo.className = 'coupon-info error';
-        couponInfo.textContent = 'Veuillez entrer un code de coupon';
-        return;
-    }
+    // Afficher le chargement
+    couponsList.innerHTML = `
+        <div class="loading-coupons">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Chargement des coupons...</span>
+        </div>
+    `;
     
     try {
-        await applyCoupon(code);
-        // Afficher un message de succès dans la modal
-        couponInfo.className = 'coupon-info success';
-        couponInfo.textContent = `Coupon "${code}" appliqué avec succès !`;
-        // Fermer la modal après un court délai
-        setTimeout(() => {
-            closeCouponModal();
-        }, 1500);
+        const response = await fetch('/api/coupons/available');
+        
+        // Vérifier si l'utilisateur a été déconnecté
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = `/login?returnTo=${encodeURIComponent('/')}`;
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des coupons');
+        }
+        
+        const coupons = await response.json();
+        
+        if (coupons.length === 0) {
+            couponsList.innerHTML = `
+                <div class="no-coupons">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Aucun coupon disponible pour le moment</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Afficher les coupons
+        couponsList.innerHTML = '';
+        coupons.forEach(coupon => {
+            const couponButton = document.createElement('button');
+            couponButton.className = 'coupon-option-button';
+            if (currentCoupon && currentCoupon._id === coupon._id) {
+                couponButton.classList.add('active');
+            }
+            
+            const discountText = coupon.type === 'percentage' 
+                ? `${coupon.value}% de réduction`
+                : `${coupon.value}$ de réduction`;
+            
+            couponButton.innerHTML = `
+                <div class="coupon-option-header">
+                    <span class="coupon-code">${coupon.code}</span>
+                    <span class="coupon-status ${currentCoupon && currentCoupon._id === coupon._id ? 'active' : ''}">
+                        ${currentCoupon && currentCoupon._id === coupon._id ? '<i class="fas fa-check-circle"></i> Appliqué' : ''}
+                    </span>
+                </div>
+                <div class="coupon-option-details">
+                    <span class="coupon-value">${discountText}</span>
+                    ${coupon.description ? `<span class="coupon-description">${coupon.description}</span>` : ''}
+                </div>
+            `;
+            
+            couponButton.onclick = async () => {
+                try {
+                    await applyCoupon(coupon);
+                    // Afficher un message de succès
+                    if (couponInfo) {
+                        couponInfo.className = 'coupon-info success';
+                        couponInfo.textContent = `Coupon "${coupon.code}" appliqué avec succès !`;
+                        couponInfo.style.display = 'block';
+                    }
+                    // Mettre à jour l'affichage des coupons
+                    await loadAvailableCouponsForModal();
+                    // Fermer la modal après un court délai
+                    setTimeout(() => {
+                        closeCouponModal();
+                    }, 1500);
+                } catch (error) {
+                    if (couponInfo) {
+                        couponInfo.className = 'coupon-info error';
+                        couponInfo.textContent = error.message || 'Erreur lors de l\'application du coupon';
+                        couponInfo.style.display = 'block';
+                    }
+                }
+            };
+            
+            couponsList.appendChild(couponButton);
+        });
     } catch (error) {
-        couponInfo.className = 'coupon-info error';
-        couponInfo.textContent = error.message || 'Erreur lors de l\'application du coupon';
+        console.error('Erreur lors du chargement des coupons:', error);
+        couponsList.innerHTML = `
+            <div class="no-coupons error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Erreur lors du chargement des coupons</p>
+                <p class="error-detail">${error.message}</p>
+            </div>
+        `;
     }
 }
 
@@ -1148,16 +1217,7 @@ function filterProducts(category) {
 // Fonction pour initialiser la modal coupon
 function initCouponModal() {
     const modal = document.getElementById('coupon-modal');
-    const form = document.getElementById('coupon-form');
     const closeBtn = modal?.querySelector('.close');
-    
-    // Gérer la soumission du formulaire avec Enter
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            applyCouponFromModal();
-        });
-    }
     
     // Fermer le modal avec le bouton X
     if (closeBtn) {
