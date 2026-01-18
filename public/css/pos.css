@@ -331,7 +331,7 @@ body {
     flex-shrink: 0;
     min-height: 36px;
     text-decoration: none;
-    margin-left: auto;
+    margin-left: var(--spacing-xs);
 }
 
 .logout-btn:hover {
@@ -2822,5 +2822,23 @@ body {
     .cart-header {
         flex-shrink: 0 !important;
         padding: var(--spacing-md) !important;
+    }
+    
+    /* Coller les boutons Admin et Déconnexion ensemble sur desktop */
+    .admin-btn {
+        margin-left: auto;
+        margin-right: 0;
+        border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+    }
+    
+    .logout-btn {
+        margin-left: 0;
+        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+        border-left: none;
+    }
+    
+    /* Créer un effet de bouton groupé */
+    .admin-btn + .logout-btn {
+        margin-left: 0;
     }
 }
