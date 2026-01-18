@@ -1684,6 +1684,9 @@ body {
         right: 0;
         top: 0;
         height: 100vh;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
     
     .cart-header {
@@ -1712,80 +1715,86 @@ body {
     }
     
     .cart-footer {
-        padding: var(--spacing-xs) var(--spacing-sm) !important;
-        gap: 4px !important;
+        padding: 3px var(--spacing-xs) !important;
+        gap: 2px !important;
         overflow: visible !important;
         flex-shrink: 0 !important;
+        max-height: none !important;
     }
     
     .total-amount {
-        font-size: 0.9375rem !important;
-        padding: 4px var(--spacing-sm) !important;
-        margin: 2px 0 !important;
+        font-size: 0.8125rem !important;
+        padding: 2px var(--spacing-xs) !important;
+        margin: 1px 0 !important;
     }
     
     .amount-due,
     .change-due {
-        padding: 2px var(--spacing-xs) !important;
-        font-size: 0.75rem !important;
+        padding: 1px var(--spacing-xs) !important;
+        font-size: 0.7rem !important;
     }
     
     #change-amount {
-        font-size: 0.9375rem !important;
+        font-size: 0.8125rem !important;
     }
     
     .payment-input {
-        padding: 4px var(--spacing-xs) !important;
-        margin: 2px 0 !important;
-        gap: 2px !important;
+        padding: 2px var(--spacing-xs) !important;
+        margin: 1px 0 !important;
+        gap: var(--spacing-xs) !important;
+        flex-direction: row !important;
     }
     
     .payment-input label {
-        font-size: 0.75rem !important;
+        font-size: 0.7rem !important;
     }
     
     .payment-input input {
-        padding: 4px var(--spacing-xs) !important;
-        font-size: 0.9375rem !important;
+        padding: 2px var(--spacing-xs) !important;
+        font-size: 0.8125rem !important;
+        flex: 1 !important;
     }
     
     .complete-btn {
-        padding: var(--spacing-xs) !important;
-        font-size: 0.9375rem !important;
-        min-height: 40px !important;
-        margin-top: 4px !important;
+        padding: 5px var(--spacing-xs) !important;
+        font-size: 0.8125rem !important;
+        min-height: 34px !important;
+        margin-top: 2px !important;
+        margin-bottom: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .coupons-section {
-        padding: 4px !important;
-        margin: 2px 0 !important;
-        max-height: 80px !important;
+        padding: 2px !important;
+        margin: 1px 0 !important;
+        max-height: 50px !important;
     }
     
     .coupons-header {
-        padding: 2px !important;
-        font-size: 0.7rem !important;
-        margin-bottom: 2px !important;
+        padding: 1px !important;
+        font-size: 0.65rem !important;
+        margin-bottom: 1px !important;
     }
     
     .coupons-header h3 {
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
     }
     
     .coupon-info,
     .discount-amount {
-        margin: 2px !important;
-        font-size: 0.7rem !important;
+        margin: 1px 2px !important;
+        font-size: 0.65rem !important;
     }
     
     .available-coupons {
-        padding: 2px !important;
-        gap: 4px !important;
+        padding: 1px !important;
+        gap: 2px !important;
     }
     
     .coupon-button {
-        padding: 2px 4px !important;
-        font-size: 0.7rem !important;
+        padding: 1px 3px !important;
+        font-size: 0.65rem !important;
     }
     
     .mini-image {
