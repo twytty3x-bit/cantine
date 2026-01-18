@@ -356,6 +356,7 @@ async function setupCategories() {
         // Sauvegarder les boutons spéciaux s'ils existent
         const ticketSaleBtn = categoriesBar.querySelector('.ticket-sale-btn');
         const adminBtn = categoriesBar.querySelector('.admin-btn');
+        const logoutBtn = categoriesBar.querySelector('.logout-btn');
         
         // Vider la barre de catégories (mais préserver les boutons spéciaux)
         const existingButtons = categoriesBar.querySelectorAll('.category-btn');
@@ -387,6 +388,16 @@ async function setupCategories() {
         // Réajouter le bouton "Admin" s'il existait
         if (adminBtn) {
             categoriesBar.appendChild(adminBtn);
+        }
+        
+        // Réajouter le bouton "Déconnexion" s'il existait
+        if (logoutBtn) {
+            categoriesBar.appendChild(logoutBtn);
+        }
+        
+        // Réajouter le bouton "Déconnexion" s'il existait
+        if (logoutBtn) {
+            categoriesBar.appendChild(logoutBtn);
         }
 
         // Gérer les clics sur les boutons de catégorie
