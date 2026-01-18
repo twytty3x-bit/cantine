@@ -24,6 +24,10 @@
                     <i class="fas fa-ticket-alt"></i>
                     <span>Moitié-Moitié</span>
                 </button>
+                <button class="coupon-btn" onclick="openCouponModal()">
+                    <i class="fas fa-tag"></i>
+                    <span>Coupon</span>
+                </button>
                 <% if (user && user.role === 'admin') { %>
                 <a href="/admin" class="admin-btn" title="Administration">
                     <i class="fas fa-cog"></i>
@@ -57,20 +61,9 @@
                     <span id="subtotal">0.00$</span>
                 </div>
                 
-                <!-- Nouvelle section coupons -->
-                <div class="coupons-section">
-                    <div class="coupons-header">
-                        <i class="fas fa-ticket-alt"></i>
-                        <h3>Coupons disponibles</h3>
-                    </div>
-                    <div id="coupon-info" class="coupon-info"></div>
-                    <div class="discount-amount" id="discount-amount" style="display: none;">
-                        <span>Réduction:</span>
-                        <span id="discount">0.00$</span>
-                    </div>
-                    <div class="available-coupons" id="available-coupons">
-                        <!-- Les coupons seront ajoutés ici dynamiquement -->
-                    </div>
+                <div class="discount-amount" id="discount-amount" style="display: none;">
+                    <span>Réduction:</span>
+                    <span id="discount">0.00$</span>
                 </div>
 
                 <div class="total-amount">
@@ -90,6 +83,33 @@
                     Compléter la vente
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal pour appliquer un coupon -->
+    <div id="coupon-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeCouponModal()">&times;</span>
+            <h2><i class="fas fa-tag"></i> Appliquer un coupon</h2>
+            <form id="coupon-form">
+                <div class="form-group">
+                    <label for="coupon-code-input">
+                        <i class="fas fa-barcode"></i>
+                        Code du coupon
+                    </label>
+                    <input type="text" id="coupon-code-input" placeholder="Entrez le code du coupon" autocomplete="off">
+                </div>
+                <div id="coupon-modal-info" class="coupon-info" style="margin: var(--spacing-sm) 0;"></div>
+                <div class="form-buttons">
+                    <button type="button" class="btn-primary" onclick="applyCouponFromModal()">
+                        <i class="fas fa-check"></i>
+                        Appliquer
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeCouponModal()">
+                        Annuler
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

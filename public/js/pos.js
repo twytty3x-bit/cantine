@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([
         setupCategories(),
         loadProducts(),
-        loadAvailableCoupons(),
         loadTicketConfig()
     ]);
     setupEventListeners();
+    initCouponModal();
 });
 
 // Initialiser le système de timeout de session
@@ -355,6 +355,7 @@ async function setupCategories() {
         
         // Sauvegarder les boutons spéciaux s'ils existent
         const ticketSaleBtn = categoriesBar.querySelector('.ticket-sale-btn');
+        const couponBtn = categoriesBar.querySelector('.coupon-btn');
         const adminBtn = categoriesBar.querySelector('.admin-btn');
         
         // Vider la barre de catégories (mais préserver les boutons spéciaux)
@@ -382,6 +383,11 @@ async function setupCategories() {
         // Réajouter le bouton "Moitié-Moitié" s'il existait
         if (ticketSaleBtn) {
             categoriesBar.appendChild(ticketSaleBtn);
+        }
+        
+        // Réajouter le bouton "Coupon" s'il existait
+        if (couponBtn) {
+            categoriesBar.appendChild(couponBtn);
         }
         
         // Réajouter le bouton "Admin" s'il existait
@@ -656,8 +662,28 @@ function updateCart() {
         }
     });
 
+    // Calculer la réduction totale du coupon
+    let totalDiscount = 0;
+    cart.forEach(item => {
+        if (item.discount) {
+            totalDiscount += item.discount;
+        }
+    });
+    
     // Mettre à jour le sous-total et le total
     document.getElementById('subtotal').textContent = subtotal.toFixed(2) + '$';
+    
+    // Afficher la réduction si un coupon est appliqué
+    const discountAmountDiv = document.getElementById('discount-amount');
+    if (currentCoupon && totalDiscount > 0) {
+        discountAmountDiv.style.display = 'flex';
+        document.getElementById('discount').textContent = '-' + totalDiscount.toFixed(2) + '$';
+        total = subtotal - totalDiscount;
+    } else {
+        discountAmountDiv.style.display = 'none';
+        total = subtotal;
+    }
+    
     document.getElementById('total').textContent = total.toFixed(2) + '$';
     
     // Mettre à jour le changement si un montant a été entré
@@ -677,7 +703,6 @@ function setupEventListeners() {
     const clearCartBtn = document.getElementById('clear-cart');
     const amountReceivedInput = document.getElementById('amount-received');
     const completeSaleBtn = document.getElementById('complete-sale');
-    const applyCouponBtn = document.getElementById('apply-coupon');
     
     if (clearCartBtn) {
         clearCartBtn.onclick = clearCart;
@@ -689,41 +714,6 @@ function setupEventListeners() {
     
     if (completeSaleBtn) {
         completeSaleBtn.onclick = completeSale;
-    }
-    
-    if (applyCouponBtn) {
-        applyCouponBtn.onclick = async () => {
-        const code = document.getElementById('coupon-code').value.trim();
-        const couponInfo = document.getElementById('coupon-info');
-        
-        if (!code) {
-            couponInfo.className = 'coupon-info error';
-            couponInfo.textContent = 'Veuillez entrer un code';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/coupons/verify/${code}`);
-            
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message);
-            }
-            
-            currentCoupon = await response.json();
-            couponInfo.className = 'coupon-info success';
-            couponInfo.textContent = `Coupon appliqué: ${currentCoupon.type === 'percentage' ? 
-                currentCoupon.value + '% de réduction' : 
-                'Réduction de ' + currentCoupon.value.toFixed(2) + '$'}`;
-            
-            updateCart();
-        } catch (error) {
-            currentCoupon = null;
-            couponInfo.className = 'coupon-info error';
-            couponInfo.textContent = error.message || 'Coupon invalide';
-            updateCart();
-        }
-        };
     }
 
     // Gestionnaire de déconnexion
@@ -896,6 +886,68 @@ function closeTicketSaleModal() {
     }
 }
 
+// Fonctions pour la modal coupon
+function openCouponModal() {
+    const modal = document.getElementById('coupon-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Réinitialiser le formulaire
+        const form = document.getElementById('coupon-form');
+        if (form) {
+            form.reset();
+        }
+        const couponInfo = document.getElementById('coupon-modal-info');
+        if (couponInfo) {
+            couponInfo.textContent = '';
+            couponInfo.className = 'coupon-info';
+        }
+        // Focus sur l'input
+        const input = document.getElementById('coupon-code-input');
+        if (input) {
+            input.focus();
+        }
+    }
+}
+
+function closeCouponModal() {
+    const modal = document.getElementById('coupon-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+async function applyCouponFromModal() {
+    const codeInput = document.getElementById('coupon-code-input');
+    const couponInfo = document.getElementById('coupon-modal-info');
+    
+    if (!codeInput || !couponInfo) {
+        console.error('Éléments de la modal coupon non trouvés');
+        return;
+    }
+    
+    const code = codeInput.value.trim();
+    
+    if (!code) {
+        couponInfo.className = 'coupon-info error';
+        couponInfo.textContent = 'Veuillez entrer un code de coupon';
+        return;
+    }
+    
+    try {
+        await applyCoupon(code);
+        // Afficher un message de succès dans la modal
+        couponInfo.className = 'coupon-info success';
+        couponInfo.textContent = `Coupon "${code}" appliqué avec succès !`;
+        // Fermer la modal après un court délai
+        setTimeout(() => {
+            closeCouponModal();
+        }, 1500);
+    } catch (error) {
+        couponInfo.className = 'coupon-info error';
+        couponInfo.textContent = error.message || 'Erreur lors de l\'application du coupon';
+    }
+}
+
 function clearCart() {
     if (confirm('Voulez-vous vraiment vider le panier ?')) {
         cart = [];
@@ -1059,7 +1111,6 @@ async function completeSale() {
             currentCoupon = null;
             document.getElementById('amount-received').value = '';
             document.getElementById('change-amount').textContent = '0.00$';
-            document.getElementById('coupon-info').textContent = '';
             updateCart();
             loadProducts();
         };
@@ -1100,39 +1151,32 @@ function filterProducts(category) {
     displayProducts(category);
 }
 
-// Ajouter la fonction pour charger les coupons disponibles
-async function loadAvailableCoupons() {
-    try {
-        const response = await fetch('/api/coupons/available');
-        
-        // Vérifier si l'utilisateur a été déconnecté
-        if (response.status === 401 || response.status === 403) {
-            window.location.href = `/login?returnTo=${encodeURIComponent('/')}`;
-            return;
-        }
-        
-        if (!response.ok) {
-            throw new Error('Erreur lors du chargement des coupons');
-        }
-        
-        const coupons = await response.json();
-        
-        const couponsContainer = document.getElementById('available-coupons');
-        couponsContainer.innerHTML = '';
-        
-        coupons.forEach(coupon => {
-            const button = document.createElement('button');
-            button.className = 'coupon-button';
-            button.innerHTML = `
-                <i class="fas fa-ticket-alt"></i>
-                <span class="coupon-code">${coupon.code}</span>
-                <span class="coupon-value">(${coupon.type === 'percentage' ? coupon.value + '%' : coupon.value + '$'})</span>
-            `;
-            button.onclick = () => applyCoupon(coupon);
-            couponsContainer.appendChild(button);
+// Fonction pour initialiser la modal coupon
+function initCouponModal() {
+    const modal = document.getElementById('coupon-modal');
+    const form = document.getElementById('coupon-form');
+    const closeBtn = modal?.querySelector('.close');
+    
+    // Gérer la soumission du formulaire avec Enter
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            applyCouponFromModal();
         });
-    } catch (error) {
-        console.error('Erreur lors du chargement des coupons:', error);
+    }
+    
+    // Fermer le modal avec le bouton X
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeCouponModal);
+    }
+    
+    // Fermer le modal en cliquant en dehors
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeCouponModal();
+            }
+        });
     }
 }
 
@@ -1153,11 +1197,6 @@ async function applyCoupon(couponOrCode) {
             coupon = await response.json();
         }
 
-        // Retirer la classe active de tous les boutons
-        document.querySelectorAll('.coupon-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
         // Si on clique sur le coupon déjà actif, on le désactive
         if (currentCoupon && currentCoupon._id === coupon._id) {
             currentCoupon = null;
@@ -1166,7 +1205,6 @@ async function applyCoupon(couponOrCode) {
                 item.discount = 0;
                 item.price = item.product.price; // Utiliser le prix original du produit
             });
-            document.getElementById('coupon-info').textContent = '';
             document.getElementById('discount-amount').style.display = 'none';
             updateCart();
             return;
@@ -1209,21 +1247,9 @@ async function applyCoupon(couponOrCode) {
 
         currentCoupon = coupon;
         
-        // Activer le bouton du coupon
-        const button = Array.from(document.querySelectorAll('.coupon-button'))
-            .find(btn => btn.querySelector('.coupon-code').textContent === coupon.code);
-        if (button) button.classList.add('active');
-
-        document.getElementById('coupon-info').className = 'coupon-info success';
-        document.getElementById('coupon-info').textContent = `Coupon appliqué: ${coupon.type === 'percentage' ? 
-            coupon.value + '% de réduction' : 
-            'Réduction de ' + coupon.value.toFixed(2) + '$'}`;
-        
         updateCart();
     } catch (error) {
         console.error('Erreur lors de l\'application du coupon:', error);
-        document.getElementById('coupon-info').className = 'coupon-info error';
-        document.getElementById('coupon-info').textContent = error.message || 'Erreur lors de l\'application du coupon';
         currentCoupon = null;
         
         // Réinitialiser les prix en cas d'erreur
@@ -1232,6 +1258,7 @@ async function applyCoupon(couponOrCode) {
             item.price = item.product.price;
         });
         updateCart();
+        throw error; // Re-lancer l'erreur pour que la modal puisse l'afficher
     }
 }
 

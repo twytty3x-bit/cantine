@@ -239,6 +239,41 @@ body {
     font-size: 0.875rem;
 }
 
+/* Bouton Coupon dans la barre des catégories */
+.coupon-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 36px;
+}
+
+.coupon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.coupon-btn:active {
+    transform: translateY(0);
+}
+
+.coupon-btn i {
+    font-size: 0.875rem;
+}
+
 /* Bouton Admin dans la barre des catégories */
 .admin-btn {
     padding: var(--spacing-sm) var(--spacing-md);
