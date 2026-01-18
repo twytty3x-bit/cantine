@@ -1497,6 +1497,10 @@ body {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         gap: var(--spacing-xs) !important;
+        /* Limiter à 3 lignes (6 produits) avant d'activer le scroll */
+        /* 3 lignes × 40px (hauteur min produit) + 2 gaps verticaux (4px chacun) + padding top/bottom (4px chacun) */
+        max-height: calc(3 * 40px + 2 * 4px + 2 * 4px) !important;
+        align-content: start !important;
     }
     
     .cart-item {
