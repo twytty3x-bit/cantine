@@ -368,7 +368,7 @@ async function displaySales(sales) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${formatDate(sale.date)}</td>
-            <td>${formatSaleItems(sale.items)}</td>
+            <td>${formatSaleItems(sale.items, sale._id)}</td>
             <td>${sale.total.toFixed(2)}$</td>
             <td>${sale.profit.toFixed(2)}$</td>
             <td>${sale.coupon && sale.coupon.code ? sale.coupon.code : 'Aucun coupon'}</td>
@@ -396,10 +396,18 @@ function formatDate(dateString) {
     });
 }
 
-function formatSaleItems(items) {
-    return items.map(item => 
-        `${item.product.name} (${item.quantity}x à ${item.price.toFixed(2)}$)`
-    ).join('<br>');
+function formatSaleItems(items, saleId) {
+    return items.map((item, index) => 
+        `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span>${item.product.name} (${item.quantity}x à ${item.price.toFixed(2)}$)</span>
+            <button onclick="removeItemFromSale('${saleId}', ${index}, '${item.product._id}', ${item.quantity})" 
+                    class="btn-small btn-danger" 
+                    style="padding: 2px 6px; font-size: 0.75rem; min-width: auto;"
+                    title="Retirer cet item">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>`
+    ).join('');
 }
 
 // Ajouter la gestion des images
@@ -467,6 +475,38 @@ async function saveSale(e) {
     } catch (error) {
         console.error('Erreur lors de la sauvegarde:', error);
         alert('Erreur lors de la sauvegarde de la vente');
+    }
+}
+
+// Retirer un item d'une vente
+async function removeItemFromSale(saleId, itemIndex, productId, quantity) {
+    if (!confirm(`Êtes-vous sûr de vouloir retirer cet item de la vente ?\n\nLe stock du produit sera remis à jour.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/sales/${saleId}/remove-item`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                itemIndex: itemIndex,
+                productId: productId,
+                quantity: quantity
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erreur lors de la suppression de l\'item');
+        }
+        
+        // Recharger la liste des ventes
+        loadSales();
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'item:', error);
+        alert('Erreur lors de la suppression de l\'item: ' + error.message);
     }
 }
 

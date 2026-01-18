@@ -693,6 +693,86 @@ router.put('/sales/:id', async (req, res) => {
     }
 });
 
+// Retirer un item d'une vente
+router.post('/sales/:id/remove-item', async (req, res) => {
+    try {
+        const { itemIndex, productId, quantity } = req.body;
+        
+        const sale = await Sale.findById(req.params.id)
+            .populate('items.product');
+        
+        if (!sale) {
+            return res.status(404).json({ message: 'Vente non trouvée' });
+        }
+        
+        if (itemIndex < 0 || itemIndex >= sale.items.length) {
+            return res.status(400).json({ message: 'Index d\'item invalide' });
+        }
+        
+        const itemToRemove = sale.items[itemIndex];
+        
+        // Vérifier que l'item correspond
+        if (itemToRemove.product._id.toString() !== productId) {
+            return res.status(400).json({ message: 'L\'item ne correspond pas' });
+        }
+        
+        // Remettre le stock du produit
+        await Product.findByIdAndUpdate(
+            productId,
+            { $inc: { stock: quantity } }
+        );
+        
+        // Retirer l'item de la vente
+        sale.items.splice(itemIndex, 1);
+        
+        // Recalculer les totaux
+        let newTotal = 0;
+        let newProfit = 0;
+        let newOriginalTotal = 0;
+        
+        sale.items.forEach(item => {
+            const itemTotal = item.finalPrice * item.quantity;
+            newTotal += itemTotal;
+            newOriginalTotal += item.price * item.quantity;
+            newProfit += (item.finalPrice - item.cost) * item.quantity;
+        });
+        
+        // Appliquer le discount global si présent
+        if (sale.discount > 0) {
+            newTotal = newOriginalTotal - sale.discount;
+        }
+        
+        // Mettre à jour la vente
+        sale.total = newTotal;
+        sale.originalTotal = newOriginalTotal;
+        sale.profit = newProfit;
+        
+        // Si la vente n'a plus d'items, la supprimer
+        if (sale.items.length === 0) {
+            // Si un coupon était utilisé, décrémenter son compteur
+            if (sale.coupon) {
+                await Coupon.findByIdAndUpdate(
+                    sale.coupon,
+                    { $inc: { usageCount: -1 } }
+                );
+            }
+            await Sale.findByIdAndDelete(req.params.id);
+            return res.json({ message: 'Vente supprimée car elle n\'a plus d\'items', deleted: true });
+        }
+        
+        await sale.save();
+        
+        res.json({
+            success: true,
+            message: 'Item retiré avec succès',
+            sale: sale
+        });
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'item:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Modifier la route de suppression des ventes
 router.delete('/sales/:id', async (req, res) => {
     try {
