@@ -364,22 +364,43 @@ async function displaySales(sales) {
     const tbody = document.querySelector('#sales-table tbody');
     tbody.innerHTML = '';
     
+    if (sales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">Aucune vente trouvée</td></tr>';
+        return;
+    }
+    
     sales.forEach(sale => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${formatDate(sale.date)}</td>
-            <td>${formatSaleItems(sale.items)}</td>
-            <td>${sale.total.toFixed(2)}$</td>
-            <td>${sale.profit.toFixed(2)}$</td>
-            <td>${sale.coupon && sale.coupon.code ? sale.coupon.code : 'Aucun coupon'}</td>
-            <td class="sale-actions">
+        const isTicket = sale.type === 'ticket';
+        
+        // Ajouter une classe pour les ventes de tickets
+        if (isTicket) {
+            tr.style.backgroundColor = '#f0f8ff';
+        }
+        
+        const itemsDisplay = isTicket 
+            ? formatTicketSaleItems(sale) 
+            : formatSaleItems(sale.items);
+        
+        // Pour les tickets, on ne peut pas les modifier/supprimer via cette interface
+        const actions = isTicket 
+            ? '<span style="color: #666; font-size: 0.85rem;"><i class="fas fa-ticket-alt"></i> Moitié-Moitié</span>'
+            : `
                 <button onclick="editSale('${sale._id}')" class="edit-sale-btn" title="Modifier">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button onclick="confirmDeleteSale('${sale._id}')" class="delete-sale-btn" title="Supprimer">
                     <i class="fas fa-trash"></i>
                 </button>
-            </td>
+            `;
+        
+        tr.innerHTML = `
+            <td>${formatDate(sale.date)}</td>
+            <td>${itemsDisplay}</td>
+            <td>${sale.total.toFixed(2)}$</td>
+            <td>${sale.profit.toFixed(2)}$</td>
+            <td>${sale.coupon && sale.coupon.code ? sale.coupon.code : 'Aucun coupon'}</td>
+            <td class="sale-actions">${actions}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -400,6 +421,14 @@ function formatSaleItems(items) {
     return items.map(item => 
         `${item.product.name} (${item.quantity}x à ${item.price.toFixed(2)}$)`
     ).join('<br>');
+}
+
+function formatTicketSaleItems(sale) {
+    const emailDisplay = sale.email ? `<br><small style="color: #666;">Email: ${sale.email}</small>` : '';
+    const ticketNumbersDisplay = sale.ticketNumbers && sale.ticketNumbers.length > 0
+        ? `<br><small style="color: #666;">Numéros: ${sale.ticketNumbers.slice(0, 3).join(', ')}${sale.ticketNumbers.length > 3 ? '...' : ''}</small>`
+        : '';
+    return `${sale.items[0].product.name}${emailDisplay}${ticketNumbersDisplay}`;
 }
 
 // Ajouter la gestion des images
