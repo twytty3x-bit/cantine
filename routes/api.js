@@ -1446,10 +1446,10 @@ async function generateTicketNumber() {
     let exists = true;
     
     while (exists) {
-        // Format: YYYYMMDD + 8 chiffres aléatoires (ex: 2024011612345678)
+        // Format: YYYYMMDD-XXXXXXXX (ex: 20240116-12345678)
         const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
         const random = Math.floor(10000000 + Math.random() * 90000000); // 8 chiffres aléatoires
-        ticketNumber = `${date}${random}`;
+        ticketNumber = `${date}-${random}`;
         
         const existing = await Ticket.findOne({ ticketNumber });
         exists = !!existing;
