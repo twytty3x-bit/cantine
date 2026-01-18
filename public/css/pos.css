@@ -1500,25 +1500,29 @@ body {
     }
     
     .cart-item {
-        padding: 4px !important;
+        padding: 3px !important;
         margin-bottom: 0 !important;
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         align-items: center !important;
-        gap: 2px !important;
+        gap: 4px !important;
         min-width: 0 !important;
+        height: auto !important;
+        min-height: 40px !important;
     }
     
     .cart-item > * {
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
     }
     
     .cart-item .mini-image {
-        width: 100% !important;
-        height: 30px !important;
-        min-height: 30px !important;
-        max-height: 30px !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        max-width: 40px !important;
+        max-height: 40px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1532,38 +1536,40 @@ body {
     }
     
     .cart-item .cart-item-details {
-        width: 100% !important;
-        text-align: center !important;
         flex: 1 !important;
         min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
         gap: 1px !important;
+        text-align: left !important;
     }
     
     .cart-item .item-name {
         font-size: 0.65rem !important;
         font-weight: 500 !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 0 !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         white-space: nowrap !important;
         width: 100% !important;
-        line-height: 1.1 !important;
+        line-height: 1.2 !important;
     }
     
     .cart-item .price-line {
         display: flex !important;
-        flex-direction: column !important;
-        gap: 1px !important;
+        flex-direction: row !important;
+        gap: 4px !important;
         align-items: center !important;
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
     }
     
     .cart-item .item-price {
         font-size: 0.7rem !important;
+        font-weight: 600 !important;
     }
     
     .cart-item .item-subtotal {
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
         color: var(--text-light) !important;
     }
     
@@ -1571,43 +1577,46 @@ body {
         gap: 2px !important;
         display: flex !important;
         align-items: center !important;
-        margin-top: 2px !important;
+        margin-top: 0 !important;
     }
     
     .quantity-controls button {
-        width: 20px !important;
-        height: 20px !important;
-        min-width: 20px !important;
-        min-height: 20px !important;
+        width: 18px !important;
+        height: 18px !important;
+        min-width: 18px !important;
+        min-height: 18px !important;
         padding: 0 !important;
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
     }
     
     .quantity-controls span {
-        font-size: 0.65rem !important;
-        min-width: 16px !important;
+        font-size: 0.6rem !important;
+        min-width: 14px !important;
         text-align: center !important;
     }
     
     .cart-item .cart-item-actions {
-        width: 100% !important;
+        width: auto !important;
         display: flex !important;
-        justify-content: center !important;
+        justify-content: flex-end !important;
+        flex-shrink: 0 !important;
     }
     
     .cart-item .remove-item {
-        width: 100% !important;
-        padding: 2px !important;
+        width: auto !important;
+        padding: 4px 6px !important;
         font-size: 0.65rem !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
     }
     
     .cart-item.ticket-item {
-        flex-direction: column !important;
+        flex-direction: row !important;
     }
     
     .cart-item.ticket-item .item-email {
-        font-size: 0.6rem !important;
-        margin-top: 1px !important;
+        font-size: 0.55rem !important;
+        margin-top: 0 !important;
     }
     
     .cart-footer {
