@@ -693,7 +693,7 @@ router.get('/sales', async (req, res) => {
             date: group.purchaseDate,
             items: [{
                 product: {
-                    name: `Moitié-Moitié (${group.quantity} billet${group.quantity > 1 ? 's' : ''})`,
+                    name: `${group.quantity} coupon(s)`,
                     price: group.totalAmount / group.quantity,
                     costPrice: 0
                 },
@@ -711,6 +711,7 @@ router.get('/sales', async (req, res) => {
             paymentMethod: group.tickets[0].paymentMethod || 'cash',
             amountReceived: group.totalAmount,
             email: group.email,
+            quantity: group.quantity,
             ticketNumbers: group.tickets.map(t => t.ticketNumber)
         }));
         

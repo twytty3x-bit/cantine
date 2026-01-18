@@ -424,8 +424,10 @@ function formatSaleItems(items) {
 }
 
 function formatTicketSaleItems(sale) {
-    const emailDisplay = sale.email ? `<br><small style="color: #666;">Email: ${sale.email}</small>` : '';
-    return `${sale.items[0].product.name}${emailDisplay}`;
+    // Format identique au panier : "X coupon(s)" avec l'email en dessous
+    const quantity = sale.items[0].quantity || sale.quantity || 1;
+    const emailDisplay = sale.email ? `<br><small style="color: #666; font-size: 0.85rem;">${sale.email}</small>` : '';
+    return `${quantity} coupon(s)${emailDisplay}`;
 }
 
 // Ajouter la gestion des images
