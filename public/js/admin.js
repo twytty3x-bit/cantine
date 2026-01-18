@@ -1698,13 +1698,20 @@ async function loadTickets(page = 1) {
                             <i class="fas fa-ban"></i> Annuler
                            </button>`;
                 
+                // Ajouter un bouton pour modifier l'email et renvoyer (si le ticket n'est pas annulé)
+                const emailButton = ticket.status !== 'cancelled' 
+                    ? `<button onclick="openUpdateEmailModal('${ticket._id}')" class="btn-small" style="background: var(--primary-color); color: white; margin-left: 5px;" title="Modifier l'email et renvoyer">
+                        <i class="fas fa-envelope"></i> Email
+                       </button>`
+                    : '';
+                
                 row.innerHTML = `
                     <td><strong>${ticket.ticketNumber}</strong></td>
                     <td>${ticket.email}</td>
                     <td>${new Date(ticket.purchaseDate).toLocaleDateString('fr-FR')}</td>
                     <td>${ticket.totalAmount.toFixed(2)}$</td>
                     <td>${statusBadge}</td>
-                    <td>${actions}</td>
+                    <td style="display: flex; gap: 5px; align-items: center;">${actions}${emailButton}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -1850,6 +1857,134 @@ async function sendWinnerEmail(ticketId) {
         alert('Erreur lors de l\'envoi de l\'email');
         sendBtn.disabled = false;
         sendBtn.innerHTML = originalText;
+    }
+}
+
+// Variables pour la modal de modification d'email
+let currentTicketIdForEmailUpdate = null;
+
+// Ouvrir la modal pour modifier l'email
+async function openUpdateEmailModal(ticketId) {
+    currentTicketIdForEmailUpdate = ticketId;
+    const modal = document.getElementById('update-email-modal');
+    const infoDiv = document.getElementById('update-email-info');
+    const form = document.getElementById('update-email-form');
+    const resultDiv = document.getElementById('update-email-result');
+    
+    // Réinitialiser
+    form.reset();
+    resultDiv.style.display = 'none';
+    infoDiv.style.display = 'none';
+    modal.style.display = 'block';
+    
+    try {
+        // Charger les informations du groupe de tickets
+        const response = await fetch(`/api/tickets/purchase-group?ticketId=${ticketId}`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            infoDiv.style.display = 'block';
+            document.getElementById('update-email-quantity').textContent = data.quantity;
+            document.getElementById('update-email-total').textContent = data.totalAmount.toFixed(2) + '$';
+            document.getElementById('update-email-current').textContent = data.tickets[0]?.email || '-';
+            document.getElementById('update-email-new').value = data.tickets[0]?.email || '';
+        } else {
+            alert('Erreur lors du chargement des informations du ticket');
+            closeUpdateEmailModal();
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement des informations');
+        closeUpdateEmailModal();
+    }
+}
+
+// Fermer la modal de modification d'email
+function closeUpdateEmailModal() {
+    const modal = document.getElementById('update-email-modal');
+    modal.style.display = 'none';
+    currentTicketIdForEmailUpdate = null;
+}
+
+// Mettre à jour l'email et renvoyer
+async function updateTicketEmail(event) {
+    event.preventDefault();
+    
+    if (!currentTicketIdForEmailUpdate) {
+        alert('Erreur: ID du ticket manquant');
+        return;
+    }
+    
+    const newEmail = document.getElementById('update-email-new').value;
+    const submitBtn = document.getElementById('update-email-submit-btn');
+    const resultDiv = document.getElementById('update-email-result');
+    
+    if (!newEmail || !newEmail.includes('@')) {
+        alert('Veuillez entrer une adresse email valide');
+        return;
+    }
+    
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    resultDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/tickets/update-email-and-send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ticketId: currentTicketIdForEmailUpdate,
+                newEmail: newEmail
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'success-message';
+            resultDiv.innerHTML = `
+                <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; color: #155724;">
+                    <p><strong><i class="fas fa-check-circle"></i> Succès !</strong></p>
+                    <p>Email mis à jour pour ${data.ticketsUpdated} ticket(s).</p>
+                    ${data.emailSent ? '<p>L\'email a été envoyé avec succès.</p>' : '<p style="color: #856404;">L\'email n\'a pas pu être envoyé. Veuillez vérifier la configuration SMTP.</p>'}
+                </div>
+            `;
+            
+            // Recharger la liste des tickets
+            loadTickets(currentTicketsPage);
+            
+            // Fermer la modal après 3 secondes
+            setTimeout(() => {
+                closeUpdateEmailModal();
+            }, 3000);
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error-message';
+            resultDiv.innerHTML = `
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; color: #721c24;">
+                    <p><strong><i class="fas fa-exclamation-triangle"></i> Erreur</strong></p>
+                    <p>${data.message || 'Erreur lors de la mise à jour de l\'email'}</p>
+                </div>
+            `;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'error-message';
+        resultDiv.innerHTML = `
+            <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; color: #721c24;">
+                <p><strong><i class="fas fa-exclamation-triangle"></i> Erreur</strong></p>
+                <p>Erreur lors de la mise à jour de l'email</p>
+            </div>
+        `;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     }
 }
 

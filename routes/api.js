@@ -1646,6 +1646,164 @@ router.post('/tickets/purchase', optionalAuthMiddleware, async (req, res) => {
     }
 });
 
+// Trouver les tickets d'un même achat (par email et date d'achat proche)
+router.get('/tickets/purchase-group', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { ticketId } = req.query;
+        
+        if (!ticketId) {
+            return res.status(400).json({ message: 'ID du ticket requis' });
+        }
+        
+        // Trouver le ticket de référence
+        const referenceTicket = await Ticket.findById(ticketId);
+        
+        if (!referenceTicket) {
+            return res.status(404).json({ message: 'Ticket non trouvé' });
+        }
+        
+        // Trouver tous les tickets du même achat (même email, même date d'achat à quelques secondes près)
+        // On considère que les tickets d'un même achat sont créés dans un intervalle de 10 secondes
+        const timeWindow = 10 * 1000; // 10 secondes en millisecondes
+        const startTime = new Date(referenceTicket.purchaseDate.getTime() - timeWindow);
+        const endTime = new Date(referenceTicket.purchaseDate.getTime() + timeWindow);
+        
+        const tickets = await Ticket.find({
+            email: referenceTicket.email,
+            purchaseDate: {
+                $gte: startTime,
+                $lte: endTime
+            },
+            status: { $ne: 'cancelled' }
+        }).sort({ purchaseDate: 1 });
+        
+        res.json({
+            success: true,
+            tickets: tickets.map(t => ({
+                _id: t._id,
+                ticketNumber: t.ticketNumber,
+                email: t.email,
+                purchaseDate: t.purchaseDate,
+                totalAmount: t.totalAmount
+            })),
+            totalAmount: tickets.reduce((sum, t) => sum + t.totalAmount, 0),
+            quantity: tickets.length
+        });
+    } catch (error) {
+        console.error('Erreur lors de la recherche du groupe de tickets:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Modifier l'email d'un lot de tickets et renvoyer l'email
+router.post('/tickets/update-email-and-send', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { ticketId, newEmail } = req.body;
+        
+        if (!ticketId || !newEmail) {
+            return res.status(400).json({ message: 'ID du ticket et nouveau email requis' });
+        }
+        
+        if (!newEmail.includes('@')) {
+            return res.status(400).json({ message: 'Email invalide' });
+        }
+        
+        // Trouver le ticket de référence
+        const referenceTicket = await Ticket.findById(ticketId);
+        
+        if (!referenceTicket) {
+            return res.status(404).json({ message: 'Ticket non trouvé' });
+        }
+        
+        // Trouver tous les tickets du même achat
+        const timeWindow = 10 * 1000; // 10 secondes
+        const startTime = new Date(referenceTicket.purchaseDate.getTime() - timeWindow);
+        const endTime = new Date(referenceTicket.purchaseDate.getTime() + timeWindow);
+        
+        const tickets = await Ticket.find({
+            email: referenceTicket.email,
+            purchaseDate: {
+                $gte: startTime,
+                $lte: endTime
+            },
+            status: { $ne: 'cancelled' }
+        });
+        
+        if (tickets.length === 0) {
+            return res.status(404).json({ message: 'Aucun ticket trouvé pour ce groupe' });
+        }
+        
+        // Mettre à jour l'email de tous les tickets
+        const ticketNumbers = [];
+        const totalAmount = tickets.reduce((sum, t) => sum + t.totalAmount, 0);
+        
+        for (const ticket of tickets) {
+            ticket.email = newEmail.toLowerCase().trim();
+            await ticket.save();
+            ticketNumbers.push(ticket.ticketNumber);
+        }
+        
+        // Envoyer l'email avec tous les numéros
+        try {
+            const transporter = await createEmailTransporter();
+            const emailFrom = await getEmailFrom();
+            
+            if (transporter) {
+                const mailOptions = {
+                    from: emailFrom,
+                    to: newEmail,
+                    subject: `Vos ${tickets.length} coupon(s) - Cantine`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #0066cc;">Merci pour votre achat !</h2>
+                            <p>Vous avez acheté <strong>${tickets.length}</strong> coupon(s) pour un total de <strong>${totalAmount.toFixed(2)}$</strong>.</p>
+                            <p>Voici vos numéros de coupons :</p>
+                            <div style="background: #f8f8f8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                ${ticketNumbers.map(num => `<p style="font-size: 18px; font-weight: bold; color: #0066cc; margin: 10px 0;">${num}</p>`).join('')}
+                            </div>
+                            <p style="color: #666;">Ces numéros vous permettront de participer au tirage au sort. Bonne chance !</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p style="color: #999; font-size: 12px;">Cantine - Système de gestion</p>
+                        </div>
+                    `
+                };
+                
+                await transporter.sendMail(mailOptions);
+                
+                res.json({
+                    success: true,
+                    message: `Email mis à jour et envoyé avec succès pour ${tickets.length} ticket(s)`,
+                    ticketsUpdated: tickets.length,
+                    ticketNumbers: ticketNumbers
+                });
+            } else {
+                // Mettre à jour quand même même si l'email ne peut pas être envoyé
+                res.json({
+                    success: true,
+                    message: `Email mis à jour pour ${tickets.length} ticket(s), mais l'envoi d'email a échoué (Configuration SMTP manquante)`,
+                    ticketsUpdated: tickets.length,
+                    ticketNumbers: ticketNumbers,
+                    emailSent: false
+                });
+            }
+        } catch (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+            // L'email a été mis à jour, mais l'envoi a échoué
+            res.json({
+                success: true,
+                message: `Email mis à jour pour ${tickets.length} ticket(s), mais l'envoi d'email a échoué`,
+                ticketsUpdated: tickets.length,
+                ticketNumbers: ticketNumbers,
+                emailSent: false,
+                emailError: emailError.message
+            });
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'email:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Envoyer l'email au gagnant (admin seulement)
 router.post('/tickets/draw/send-email', authMiddleware, adminMiddleware, async (req, res) => {
     try {

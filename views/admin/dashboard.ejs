@@ -742,6 +742,39 @@
                 </div>
             </div>
 
+            <!-- Modal pour modifier l'email et renvoyer -->
+            <div id="update-email-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeUpdateEmailModal()">&times;</span>
+                    <h2><i class="fas fa-envelope"></i> Modifier l'email et renvoyer</h2>
+                    <div id="update-email-info" style="margin: 15px 0; padding: 10px; background: var(--bg-color); border-radius: 8px; display: none;">
+                        <p><strong>Nombre de tickets dans ce lot:</strong> <span id="update-email-quantity">0</span></p>
+                        <p><strong>Montant total:</strong> <span id="update-email-total">0.00$</span></p>
+                        <p><strong>Email actuel:</strong> <span id="update-email-current">-</span></p>
+                    </div>
+                    <form id="update-email-form" onsubmit="updateTicketEmail(event)">
+                        <div class="form-group">
+                            <label for="update-email-new">
+                                <i class="fas fa-envelope"></i>
+                                Nouvelle adresse email
+                            </label>
+                            <input type="email" id="update-email-new" required placeholder="nouveau@email.com">
+                            <small>Cette adresse remplacera l'email actuel pour tous les tickets de ce lot d'achat.</small>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary" id="update-email-submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                Modifier et envoyer l'email
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="closeUpdateEmailModal()">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                    <div id="update-email-result" style="margin-top: 15px; display: none;"></div>
+                </div>
+            </div>
+
             <div class="tab-content" id="smtp">
                 <div class="section-header">
                     <h2>Configuration SMTP</h2>
