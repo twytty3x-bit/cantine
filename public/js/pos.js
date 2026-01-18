@@ -611,9 +611,9 @@ function updateCart() {
                 <div class="cart-item-details">
                     <span class="item-name">${ticketQuantity} coupon(s)</span>
                     <div class="item-email" style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">${ticketEmail}</div>
-                    <div class="price-line">
-                        <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
-                    </div>
+                </div>
+                <div class="cart-item-price">
+                    <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
                 </div>
                 <div class="cart-item-actions">
                     <button class="remove-item" onclick="removeFromCart(${index})">
@@ -631,9 +631,6 @@ function updateCart() {
                 </div>
                 <div class="cart-item-details">
                     <span class="item-name">${item.product.name}</span>
-                    <div class="price-line">
-                        <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
-                    </div>
                     <div class="quantity-controls">
                         <button onclick="updateQuantity(${index}, ${item.quantity - 1})">
                             <i class="fas fa-minus"></i>
@@ -643,6 +640,9 @@ function updateCart() {
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
+                </div>
+                <div class="cart-item-price">
+                    <span class="item-subtotal">${itemSubtotal.toFixed(2)}$</span>
                 </div>
                 <div class="cart-item-actions">
                     <button class="remove-item" onclick="removeFromCart(${index})">

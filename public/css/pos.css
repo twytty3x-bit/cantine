@@ -552,6 +552,16 @@ body {
     border-left: 4px solid #ffd700;
 }
 
+.cart-item-price {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-right: var(--spacing-xs);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
 /* Footer panier */
 .cart-footer {
     padding: var(--spacing-xs) var(--spacing-sm);
@@ -1572,16 +1582,17 @@ body {
         box-sizing: border-box !important;
     }
     
-    .cart-item .price-line {
+    .cart-item-price {
         display: flex !important;
-        flex-direction: row !important;
-        gap: 4px !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        font-size: 0.6rem !important;
+        flex-shrink: 0 !important;
+        margin-right: var(--spacing-xs) !important;
+        font-weight: 600 !important;
+        color: var(--text-color) !important;
     }
     
-    .cart-item .item-subtotal {
+    .cart-item-price .item-subtotal {
         font-size: 0.7rem !important;
         font-weight: 600 !important;
         color: var(--text-color) !important;
