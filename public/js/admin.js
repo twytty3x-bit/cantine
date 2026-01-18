@@ -425,10 +425,7 @@ function formatSaleItems(items) {
 
 function formatTicketSaleItems(sale) {
     const emailDisplay = sale.email ? `<br><small style="color: #666;">Email: ${sale.email}</small>` : '';
-    const ticketNumbersDisplay = sale.ticketNumbers && sale.ticketNumbers.length > 0
-        ? `<br><small style="color: #666;">Numéros: ${sale.ticketNumbers.slice(0, 3).join(', ')}${sale.ticketNumbers.length > 3 ? '...' : ''}</small>`
-        : '';
-    return `${sale.items[0].product.name}${emailDisplay}${ticketNumbersDisplay}`;
+    return `${sale.items[0].product.name}${emailDisplay}`;
 }
 
 // Ajouter la gestion des images
