@@ -437,28 +437,17 @@ router.get('/stats/coupons', async (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         const { start, end } = req.query;
-        const saleDateQuery = {};
-        const ticketDateQuery = {};
-        
+        const dateQuery = {};
         if (start && end) {
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            endDate.setHours(23, 59, 59, 999);
-            
-            saleDateQuery.date = {
-                $gte: startDate,
-                $lte: endDate
-            };
-            
-            ticketDateQuery.purchaseDate = {
-                $gte: startDate,
-                $lte: endDate
+            dateQuery.date = {
+                $gte: new Date(start),
+                $lte: new Date(end)
             };
         }
 
-        // Statistiques globales des ventes de produits
-        const saleStats = await Sale.aggregate([
-            { $match: saleDateQuery },
+        // Statistiques globales
+        const overallStats = await Sale.aggregate([
+            { $match: dateQuery },
             {
                 $group: {
                     _id: null,
@@ -468,34 +457,6 @@ router.get('/stats', async (req, res) => {
                 }
             }
         ]);
-        
-        // Statistiques globales des ventes de tickets
-        const ticketStats = await Ticket.aggregate([
-            { 
-                $match: {
-                    ...ticketDateQuery,
-                    status: { $ne: 'cancelled' } // Exclure les tickets annulés
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalSales: { $sum: "$totalAmount" },
-                    totalProfit: { $sum: "$totalAmount" }, // Les tickets n'ont pas de coût, donc profit = total
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
-        
-        // Combiner les statistiques
-        const saleResult = saleStats[0] || { totalSales: 0, totalProfit: 0, count: 0 };
-        const ticketResult = ticketStats[0] || { totalSales: 0, totalProfit: 0, count: 0 };
-        
-        const overallStats = [{
-            totalSales: saleResult.totalSales + ticketResult.totalSales,
-            totalProfit: saleResult.totalProfit + ticketResult.totalProfit,
-            count: saleResult.count + ticketResult.count
-        }];
 
         // Statistiques par produit
         const productStats = await Sale.aggregate([
@@ -618,31 +579,20 @@ router.get('/sales/:id', async (req, res) => {
     }
 });
 
-// 4. Route pour obtenir toutes les ventes (produits + tickets)
+// 4. Route pour obtenir toutes les ventes
 router.get('/sales', async (req, res) => {
     try {
         const { start, end } = req.query;
-        let saleQuery = {};
-        let ticketQuery = {};
+        let query = {};
         
         if (start && end) {
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            endDate.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
-            
-            saleQuery.date = {
-                $gte: startDate,
-                $lte: endDate
-            };
-            
-            ticketQuery.purchaseDate = {
-                $gte: startDate,
-                $lte: endDate
+            query.date = {
+                $gte: new Date(start),
+                $lte: new Date(end)
             };
         }
         
-        // Récupérer les ventes de produits
-        const productSales = await Sale.find(saleQuery)
+        const sales = await Sale.find(query)
             .populate({
                 path: 'items.product',
                 select: 'name price costPrice'
@@ -652,74 +602,8 @@ router.get('/sales', async (req, res) => {
                 select: 'code type value'
             })
             .sort('-date');
-        
-        // Récupérer les tickets et les regrouper par achat
-        const allTickets = await Ticket.find(ticketQuery)
-            .populate({
-                path: 'soldBy',
-                select: 'name email'
-            })
-            .sort('purchaseDate');
-        
-        // Regrouper les tickets par achat (même email, même date d'achat proche)
-        const ticketGroups = new Map();
-        const timeWindow = 10 * 1000; // 10 secondes
-        
-        allTickets.forEach(ticket => {
-            if (ticket.status === 'cancelled') return; // Ignorer les tickets annulés
             
-            const key = `${ticket.email}_${ticket.purchaseDate.getTime()}`;
-            
-            if (!ticketGroups.has(key)) {
-                ticketGroups.set(key, {
-                    tickets: [],
-                    email: ticket.email,
-                    purchaseDate: ticket.purchaseDate,
-                    totalAmount: 0,
-                    quantity: 0
-                });
-            }
-            
-            const group = ticketGroups.get(key);
-            group.tickets.push(ticket);
-            group.totalAmount += ticket.totalAmount;
-            group.quantity += 1;
-        });
-        
-        // Convertir les groupes de tickets en format de vente
-        const ticketSales = Array.from(ticketGroups.values()).map(group => ({
-            _id: `ticket_${group.tickets[0]._id}`,
-            type: 'ticket',
-            date: group.purchaseDate,
-            items: [{
-                product: {
-                    name: `${group.quantity} coupon(s)`,
-                    price: group.totalAmount / group.quantity,
-                    costPrice: 0
-                },
-                quantity: group.quantity,
-                price: group.totalAmount / group.quantity,
-                cost: 0,
-                discount: 0,
-                finalPrice: group.totalAmount / group.quantity
-            }],
-            total: group.totalAmount,
-            originalTotal: group.totalAmount,
-            discount: 0,
-            profit: group.totalAmount, // Les tickets n'ont pas de coût
-            coupon: null,
-            paymentMethod: group.tickets[0].paymentMethod || 'cash',
-            amountReceived: group.totalAmount,
-            email: group.email,
-            quantity: group.quantity,
-            ticketNumbers: group.tickets.map(t => t.ticketNumber)
-        }));
-        
-        // Combiner les ventes de produits et de tickets, puis trier par date
-        const allSales = [...productSales.map(sale => ({ ...sale.toObject(), type: 'product' })), ...ticketSales]
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-        res.json(allSales);
+        res.json(sales);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
