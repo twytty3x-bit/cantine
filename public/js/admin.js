@@ -138,6 +138,10 @@ function openAddProductModal() {
     editingProductId = null;
     document.querySelector('#product-modal h2').textContent = 'Ajouter un produit';
     document.getElementById('product-form').reset();
+    // Réinitialiser l'input file et la prévisualisation
+    document.getElementById('product-image').value = '';
+    document.getElementById('image-preview').innerHTML = '';
+    document.getElementById('image-preview').style.display = 'none';
     productModal.classList.add('show');
 }
 
@@ -154,6 +158,11 @@ async function editProduct(productId) {
         document.getElementById('product-price').value = product.price;
         document.getElementById('product-cost').value = product.costPrice;
         document.getElementById('product-stock').value = product.stock;
+        
+        // Réinitialiser l'input file et la prévisualisation pour éviter que l'ancienne image reste en mémoire
+        document.getElementById('product-image').value = '';
+        document.getElementById('image-preview').innerHTML = '';
+        document.getElementById('image-preview').style.display = 'none';
         
         productModal.classList.add('show');
     } catch (error) {
@@ -208,6 +217,12 @@ document.getElementById('product-form').onsubmit = async (e) => {
             throw new Error('Erreur lors de la sauvegarde');
         }
 
+        // Réinitialiser le formulaire et l'input file
+        document.getElementById('product-form').reset();
+        document.getElementById('product-image').value = '';
+        document.getElementById('image-preview').innerHTML = '';
+        document.getElementById('image-preview').style.display = 'none';
+        
         productModal.classList.remove('show');
         loadInventory();
     } catch (error) {
