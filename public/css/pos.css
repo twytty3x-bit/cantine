@@ -1285,6 +1285,9 @@ body {
         position: relative !important;
         z-index: 1 !important;
         overflow: visible !important;
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
     }
     
     .cart-section {
@@ -2840,5 +2843,88 @@ body {
     /* Créer un effet de bouton groupé */
     .admin-btn + .logout-btn {
         margin-left: 0;
+    }
+    
+    /* Garantir la visibilité des quantités en stock sur desktop */
+    .product-tile {
+        overflow: visible !important;
+        min-height: 300px !important;
+        max-height: 300px !important;
+        height: 300px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+    }
+    
+    .product-stock {
+        font-size: 0.8125rem !important;
+        color: var(--text-light) !important;
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+        padding: 0 var(--spacing-xs) !important;
+        flex-shrink: 0 !important;
+        line-height: 1.3 !important;
+        height: auto !important;
+        min-height: 1.2em !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        position: relative !important;
+        z-index: 1 !important;
+        overflow: visible !important;
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+    }
+    
+    .product-name {
+        flex-shrink: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    .product-price {
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+    }
+    
+    .product-image {
+        flex-shrink: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
+/* Desktop - Grands écrans (au-delà de 1366px) - Garantir la visibilité des quantités */
+@media screen and (min-width: 1367px) {
+    .product-tile {
+        overflow: visible !important;
+        min-height: 300px !important;
+        max-height: 300px !important;
+        height: 300px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        padding: var(--spacing-md) !important;
+        box-sizing: border-box !important;
+    }
+    
+    .product-stock {
+        font-size: 0.8125rem !important;
+        color: var(--text-light) !important;
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+        padding: 0 var(--spacing-xs) !important;
+        flex-shrink: 0 !important;
+        line-height: 1.3 !important;
+        height: auto !important;
+        min-height: 1.2em !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        position: relative !important;
+        z-index: 1 !important;
+        overflow: visible !important;
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
     }
 }
