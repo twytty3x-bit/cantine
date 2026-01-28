@@ -264,7 +264,7 @@ router.get('/coupons/verify/:code', async (req, res) => {
 });
 
 // Modifier la route de création de vente
-router.post('/sales', async (req, res) => {
+router.post('/sales', optionalAuthMiddleware, async (req, res) => {
     try {
         console.log('Données reçues:', JSON.stringify(req.body, null, 2));
 
@@ -276,6 +276,9 @@ router.post('/sales', async (req, res) => {
         if (req.body.amountReceived === null || req.body.amountReceived === undefined) {
             return res.status(400).json({ message: 'Le montant reçu est requis' });
         }
+
+        // Récupérer l'utilisateur si authentifié (pour tracker le vendeur)
+        const sellerId = req.user ? req.user._id : null;
 
         // Vérifier les items
         const validItems = req.body.items.map(item => ({
@@ -295,7 +298,8 @@ router.post('/sales', async (req, res) => {
             coupon: req.body.coupon || null,
             profit: req.body.profit,
             paymentMethod: req.body.paymentMethod || 'cash',
-            amountReceived: req.body.amountReceived
+            amountReceived: req.body.amountReceived,
+            soldBy: sellerId
         });
 
         console.log('Sale object avant sauvegarde:', sale);
@@ -543,6 +547,40 @@ router.get('/stats', async (req, res) => {
             { $sort: { totalSales: -1 } }
         ]);
 
+        // Statistiques par vendeur
+        const sellerStats = await Sale.aggregate([
+            { $match: dateQuery },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "soldBy",
+                    foreignField: "_id",
+                    as: "sellerInfo"
+                }
+            },
+            {
+                $group: {
+                    _id: "$soldBy",
+                    sellerName: { $first: { $arrayElemAt: ["$sellerInfo.username", 0] } },
+                    sellerEmail: { $first: { $arrayElemAt: ["$sellerInfo.email", 0] } },
+                    totalSales: { $sum: "$total" },
+                    totalProfit: { $sum: "$profit" },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    sellerId: "$_id",
+                    sellerName: { $ifNull: ["$sellerName", "Non assigné"] },
+                    sellerEmail: { $ifNull: ["$sellerEmail", ""] },
+                    totalSales: { $round: ["$totalSales", 2] },
+                    totalProfit: { $round: ["$totalProfit", 2] },
+                    count: 1
+                }
+            },
+            { $sort: { totalSales: -1 } }
+        ]);
+
         const result = {
             overall: overallStats[0] || {
                 totalSales: 0,
@@ -550,7 +588,8 @@ router.get('/stats', async (req, res) => {
                 count: 0
             },
             popularProducts: productStats || [],
-            categoryStats: categoryStats || []
+            categoryStats: categoryStats || [],
+            sellerStats: sellerStats || []
         };
 
         console.log('Envoi des données:', JSON.stringify(result, null, 2));

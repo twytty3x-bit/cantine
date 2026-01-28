@@ -69,6 +69,11 @@ const saleSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0
+    },
+    soldBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
     }
 }, {
     timestamps: true
