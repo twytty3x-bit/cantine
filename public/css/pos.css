@@ -369,16 +369,17 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 300px;
-    max-height: 300px;
+    min-height: 320px;
+    max-height: 320px;
     width: 100%;
     overflow: hidden;
     position: relative;
     border: 1px solid var(--border-light);
-    justify-content: space-between;
+    justify-content: flex-start;
     box-sizing: border-box;
     /* S'assurer que le contenu ne déborde pas */
     contain: layout style;
+    gap: var(--spacing-xs);
 }
 
 .product-tile:hover {
@@ -399,9 +400,9 @@ body {
 /* Image produit */
 .product-image {
     width: 100%;
-    height: 100px;
-    min-height: 100px;
-    max-height: 100px;
+    height: 90px;
+    min-height: 90px;
+    max-height: 90px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -431,7 +432,7 @@ body {
 .product-name {
     font-size: 0.9375rem;
     color: var(--text-color);
-    margin: var(--spacing-xs) 0;
+    margin: 0;
     padding: 0 var(--spacing-xs);
     font-weight: 500;
     line-height: 1.3;
@@ -454,8 +455,8 @@ body {
     color: var(--primary-color);
     font-size: 1.125rem;
     font-weight: 700;
-    margin: var(--spacing-xs) 0;
-    padding: 0 var(--spacing-xs);
+    margin: 0;
+    padding: var(--spacing-xs) var(--spacing-xs);
     flex-shrink: 0;
     line-height: 1.3;
     height: auto;
@@ -471,7 +472,7 @@ body {
     color: var(--text-light);
     margin-top: auto;
     margin-bottom: 0;
-    padding: 0 var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-xs);
     flex-shrink: 0;
     line-height: 1.3;
     height: auto;
@@ -2857,13 +2858,32 @@ body {
     /* Garantir la visibilité des quantités en stock sur desktop */
     .product-tile {
         overflow: hidden !important;
-        min-height: 300px !important;
-        max-height: 300px !important;
-        height: 300px !important;
+        min-height: 320px !important;
+        max-height: 320px !important;
+        height: 320px !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         contain: layout style !important;
+        gap: var(--spacing-xs) !important;
+    }
+    
+    .product-image {
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .product-name {
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .product-price {
+        margin: 0 !important;
+        padding: var(--spacing-xs) var(--spacing-xs) !important;
+        flex-shrink: 0 !important;
     }
     
     .product-stock {
@@ -2909,15 +2929,34 @@ body {
 @media screen and (min-width: 1367px) {
     .product-tile {
         overflow: hidden !important;
-        min-height: 300px !important;
-        max-height: 300px !important;
-        height: 300px !important;
+        min-height: 320px !important;
+        max-height: 320px !important;
+        height: 320px !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         padding: var(--spacing-md) !important;
         box-sizing: border-box !important;
         contain: layout style !important;
+        gap: var(--spacing-xs) !important;
+    }
+    
+    .product-image {
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .product-name {
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .product-price {
+        margin: 0 !important;
+        padding: var(--spacing-xs) var(--spacing-xs) !important;
+        flex-shrink: 0 !important;
     }
     
     .product-stock {
