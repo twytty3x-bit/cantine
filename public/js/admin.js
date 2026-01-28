@@ -1,41 +1,76 @@
-// Gestion des onglets
-document.querySelectorAll('.admin-menu li').forEach(tab => {
-    tab.addEventListener('click', () => {
-        // Retirer la classe active de tous les onglets
-        document.querySelectorAll('.admin-menu li').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        // Activer l'onglet cliqué
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.tab).classList.add('active');
-        
-        // Charger les données appropriées
-        if (tab.dataset.tab === 'inventory') {
-            loadInventory();
-        } else if (tab.dataset.tab === 'sales') {
-            loadSales();
-        } else if (tab.dataset.tab === 'reports') {
-            loadReports();
-        } else if (tab.dataset.tab === 'categories') {
-            loadCategories();
-        } else if (tab.dataset.tab === 'coupons') {
-            loadCoupons();
-        } else if (tab.dataset.tab === 'users') {
-            loadUsers();
-        } else if (tab.dataset.tab === 'smtp') {
-            loadSMTPConfig();
-        }
+// Gestion des onglets - sera initialisé dans DOMContentLoaded
+let tabsInitialized = false;
+
+function initializeTabs() {
+    if (tabsInitialized) return;
+    
+    const tabs = document.querySelectorAll('.admin-menu li');
+    if (tabs.length === 0) {
+        console.warn('Aucun onglet trouvé dans le menu admin');
+        return;
+    }
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Retirer la classe active de tous les onglets
+            document.querySelectorAll('.admin-menu li').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Activer l'onglet cliqué
+            tab.classList.add('active');
+            const tabContent = document.getElementById(tab.dataset.tab);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+            
+            // Charger les données appropriées
+            if (tab.dataset.tab === 'inventory') {
+                loadInventory();
+            } else if (tab.dataset.tab === 'sales') {
+                loadSales();
+            } else if (tab.dataset.tab === 'reports') {
+                loadReports();
+            } else if (tab.dataset.tab === 'categories') {
+                loadCategories();
+            } else if (tab.dataset.tab === 'coupons') {
+                loadCoupons();
+            } else if (tab.dataset.tab === 'users') {
+                loadUsers();
+            } else if (tab.dataset.tab === 'smtp') {
+                loadSMTPConfig();
+            } else if (tab.dataset.tab === 'tickets') {
+                loadTicketsStats();
+                loadTickets();
+                loadTicketConfig();
+                loadSellerReport();
+            }
+        });
     });
-});
+    
+    tabsInitialized = true;
+}
 
 // Gestion de l'inventaire
 async function loadInventory() {
     try {
         const response = await fetch('/api/products');
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
         const products = await response.json();
         
         const tbody = document.querySelector('#inventory-table tbody');
+        if (!tbody) {
+            console.error('Tableau d\'inventaire non trouvé');
+            return;
+        }
+        
         tbody.innerHTML = '';
+        
+        if (!products || products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Aucun produit trouvé</td></tr>';
+            return;
+        }
         
         products.forEach(product => {
             const stockStatus = getStockStatus(product.stock);
@@ -81,60 +116,88 @@ function getStockStatus(stock) {
 }
 
 // Gestion du modal des produits
-const productModal = document.getElementById('product-modal');
+let productModal = null;
+let categoryModal = null;
 let editingProductId = null;
 
 // Modifier la gestion des modals et des boutons de fermeture
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser la référence au modal des catégories
-    categoryModal = document.getElementById('category-modal');
+    console.log('Admin: DOMContentLoaded - Initialisation...');
     
-    // Initialiser les gestionnaires de fermeture pour tous les modals
-    document.querySelectorAll('.modal .close').forEach(closeBtn => {
-        closeBtn.onclick = function() {
-            this.closest('.modal').classList.remove('show');
-        };
-    });
-
-    // Gérer la soumission du formulaire de catégorie
-    document.getElementById('category-form').onsubmit = async (e) => {
-        e.preventDefault();
+    try {
+        // Initialiser les références aux modals
+        productModal = document.getElementById('product-modal');
+        categoryModal = document.getElementById('category-modal');
         
-        const categoryData = {
-            name: document.getElementById('category-name').value,
-            active: document.getElementById('category-active').checked
-        };
+        console.log('Admin: Modals initialisés', { productModal: !!productModal, categoryModal: !!categoryModal });
+        
+        // Initialiser les onglets en premier
+        initializeTabs();
+        console.log('Admin: Onglets initialisés');
+        
+        // Initialiser les gestionnaires de fermeture pour tous les modals
+        document.querySelectorAll('.modal .close').forEach(closeBtn => {
+            closeBtn.onclick = function() {
+                this.closest('.modal').classList.remove('show');
+            };
+        });
 
-        try {
-            const url = editingCategoryId ? 
-                `/api/categories/${editingCategoryId}` : '/api/categories';
-            const method = editingCategoryId ? 'PUT' : 'POST';
+        // Gérer la soumission du formulaire de catégorie
+        const categoryForm = document.getElementById('category-form');
+        if (categoryForm) {
+            categoryForm.onsubmit = async (e) => {
+                e.preventDefault();
+                
+                const categoryData = {
+                    name: document.getElementById('category-name').value,
+                    active: document.getElementById('category-active').checked
+                };
 
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(categoryData)
-            });
+                try {
+                    const url = editingCategoryId ? 
+                        `/api/categories/${editingCategoryId}` : '/api/categories';
+                    const method = editingCategoryId ? 'PUT' : 'POST';
 
-            if (!response.ok) {
-                throw new Error('Erreur lors de la sauvegarde');
-            }
-            
-            categoryModal.classList.remove('show');
-            loadCategories();
-        } catch (error) {
-            console.error('Erreur lors de la sauvegarde:', error);
-            alert('Erreur lors de la sauvegarde de la catégorie');
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(categoryData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de la sauvegarde');
+                    }
+                    
+                    if (categoryModal) {
+                        categoryModal.classList.remove('show');
+                    }
+                    loadCategories();
+                } catch (error) {
+                    console.error('Erreur lors de la sauvegarde:', error);
+                    alert('Erreur lors de la sauvegarde de la catégorie');
+                }
+            };
         }
-    };
 
-    // Charger les données initiales
-    loadInventory();
-    loadCategories();
+        // Charger les données initiales
+        console.log('Admin: Chargement des données initiales...');
+        loadInventory();
+        loadCategories();
+        console.log('Admin: Initialisation terminée');
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation admin:', error);
+    }
 });
 
 // Fonctions pour les produits
 function openAddProductModal() {
+    if (!productModal) {
+        productModal = document.getElementById('product-modal');
+    }
+    if (!productModal) {
+        console.error('Modal produit non trouvé');
+        return;
+    }
     editingProductId = null;
     document.querySelector('#product-modal h2').textContent = 'Ajouter un produit';
     document.getElementById('product-form').reset();
@@ -146,6 +209,13 @@ function openAddProductModal() {
 }
 
 async function editProduct(productId) {
+    if (!productModal) {
+        productModal = document.getElementById('product-modal');
+    }
+    if (!productModal) {
+        console.error('Modal produit non trouvé');
+        return;
+    }
     try {
         const response = await fetch(`/api/products/${productId}`);
         const product = await response.json();
@@ -1272,10 +1342,12 @@ async function checkAuth() {
     }
 }
 
-// Appeler la vérification au chargement
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    // ... reste du code existant
+// Appeler la vérification au chargement (ne bloque pas l'initialisation)
+document.addEventListener('DOMContentLoaded', async () => {
+    // Vérifier l'authentification en arrière-plan, ne pas bloquer l'interface
+    checkAuth().catch(error => {
+        console.error('Erreur lors de la vérification de l\'authentification:', error);
+    });
 });
 
 // Gestion des utilisateurs
@@ -1700,23 +1772,8 @@ function displayImportResults(result) {
     resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Ajouter loadUsers à l'initialisation
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('[data-tab="users"]')) {
-        loadUsers();
-    }
-    
-    if (document.querySelector('[data-tab="tickets"]')) {
-        loadTicketsStats();
-        loadTickets();
-        loadTicketConfig();
-        loadSellerReport();
-    }
-    
-    if (document.querySelector('[data-tab="smtp"]')) {
-        loadSMTPConfig();
-    }
-});
+// Ces fonctions seront appelées automatiquement lors du clic sur les onglets
+// Plus besoin d'un DOMContentLoaded séparé ici
 
 // ============================================
 // FONCTIONS POUR LA GESTION DES TICKETS
