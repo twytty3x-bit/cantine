@@ -19,6 +19,27 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 
+// Middleware pour authentification optionnelle (pour tracker le vendeur)
+const optionalAuthMiddleware = async (req, res, next) => {
+    try {
+        const token = req.cookies.token;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.userId);
+                if (user && user.active) {
+                    req.user = user;
+                }
+            } catch (error) {
+                // Ignorer les erreurs d'authentification, continuer sans utilisateur
+            }
+        }
+        next();
+    } catch (error) {
+        next();
+    }
+};
+
 // Configuration de multer pour le stockage des images
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -1623,27 +1644,6 @@ router.get('/tickets/config', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
-// Middleware d'authentification optionnel (ne bloque pas si non authentifié)
-const optionalAuthMiddleware = async (req, res, next) => {
-    try {
-        const token = req.cookies.token;
-        if (token) {
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                const user = await User.findById(decoded.userId);
-                if (user && user.active) {
-                    req.user = user;
-                }
-            } catch (error) {
-                // Ignorer les erreurs d'authentification, continuer sans utilisateur
-            }
-        }
-        next();
-    } catch (error) {
-        next();
-    }
-};
 
 // Acheter des coupons (route publique mais avec authentification optionnelle pour tracker le vendeur)
 router.post('/tickets/purchase', optionalAuthMiddleware, async (req, res) => {
