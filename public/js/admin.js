@@ -724,11 +724,6 @@ async function loadReports() {
         document.querySelector('#product-sales-table tbody').innerHTML = loadingMessage;
         document.querySelector('#category-sales-table tbody').innerHTML = 
             '<tr><td colspan="3" class="loading">Chargement des données...</td></tr>';
-        const sellerTableBody = document.querySelector('#seller-sales-table tbody');
-        if (sellerTableBody) {
-            sellerTableBody.innerHTML = '<tr><td colspan="5" class="loading">Chargement des données...</td></tr>';
-        }
-
         // Réinitialiser les statistiques globales
         document.getElementById('total-sales-value').textContent = '0.00$';
         document.getElementById('total-profit-value').textContent = '0.00$';
@@ -909,10 +904,10 @@ async function loadReports() {
 
         // Afficher les ventes par vendeur
         console.log('8.5. Mise à jour des ventes par vendeur');
-        const sellerTableBody = document.querySelector('#seller-sales-table tbody');
-        if (sellerTableBody && data.sellerStats) {
+        const sellerTableBodyElement = document.querySelector('#seller-sales-table tbody');
+        if (sellerTableBodyElement && data.sellerStats) {
             if (data.sellerStats.length > 0) {
-                sellerTableBody.innerHTML = '';
+                sellerTableBodyElement.innerHTML = '';
                 data.sellerStats.forEach((seller, index) => {
                     const tr = document.createElement('tr');
                     tr.style.animationDelay = `${index * 0.05}s`;
@@ -933,10 +928,10 @@ async function loadReports() {
                             </span>
                         </td>
                     `;
-                    sellerTableBody.appendChild(tr);
+                    sellerTableBodyElement.appendChild(tr);
                 });
             } else {
-                sellerTableBody.innerHTML = '<tr><td colspan="5" class="no-data"><i class="fas fa-inbox"></i> Aucune vente par vendeur</td></tr>';
+                sellerTableBodyElement.innerHTML = '<tr><td colspan="5" class="no-data"><i class="fas fa-inbox"></i> Aucune vente par vendeur</td></tr>';
             }
         }
 
